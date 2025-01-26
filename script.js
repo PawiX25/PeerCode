@@ -459,6 +459,27 @@ function setupConnection() {
     });
 }
 
+function sendOperation(filename, operation) {
+    versions[filename] = (versions[filename] || 0) + 1;
+    operation.version = versions[filename];
+    
+    pendingOperations[filename] = pendingOperations[filename] || [];
+    pendingOperations[filename].push(operation);
+
+    conn.send({
+        type: 'operation',
+        filename: filename,
+        operation: operation.operation,
+        position: operation.position,
+        chars: operation.chars,
+        version: operation.version
+    });
+
+    if (pendingOperations[filename].length > 50) {
+        pendingOperations[filename] = pendingOperations[filename].slice(-50);
+    }
+}
+
 editor.on('change', (cm, change) => {
     if (!isReceiving && conn?.open) {
         try {
@@ -466,29 +487,17 @@ editor.on('change', (cm, change) => {
             const fromIndex = editor.indexFromPos(change.from);
             const toIndex = editor.indexFromPos(change.to);
 
-            let operation;
-            if (change.origin === '+delete') {
+            if (change.removed.some(line => line.length > 0)) {
                 const removedText = change.removed.join('\n');
-                operation = new TextOperation('delete', fromIndex, removedText);
-            } else {
-                const insertedText = change.text.join('\n');
-                operation = new TextOperation('insert', fromIndex, insertedText);
+                const deleteOp = new TextOperation('delete', fromIndex, removedText);
+                sendOperation(currentFile, deleteOp);
             }
 
-            versions[currentFile] = (versions[currentFile] || 0) + 1;
-            operation.version = versions[currentFile];
-            
-            pendingOperations[currentFile] = pendingOperations[currentFile] || [];
-            pendingOperations[currentFile].push(operation);
-
-            conn.send({
-                type: 'operation',
-                filename: currentFile,
-                operation: operation.operation,
-                position: operation.position,
-                chars: operation.chars,
-                version: operation.version
-            });
+            const insertedText = change.text.join('\n');
+            if (insertedText.length > 0 && !(change.origin === '+delete' && insertedText === '')) {
+                const insertOp = new TextOperation('insert', fromIndex, insertedText);
+                sendOperation(currentFile, insertOp);
+            }
 
             const cursorPos = editor.getCursor();
             conn.send({
@@ -496,10 +505,6 @@ editor.on('change', (cm, change) => {
                 filename: currentFile,
                 position: editor.indexFromPos(cursorPos)
             });
-
-            if (pendingOperations[currentFile].length > 50) {
-                pendingOperations[currentFile] = pendingOperations[currentFile].slice(-50);
-            }
         } catch (error) {
             updateConnectionStatus('error', 'Failed to send changes: ' + error.message);
         }
