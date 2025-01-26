@@ -1,9 +1,9 @@
+let versions = {};
+let pendingOperations = {};
 let editor;
 let peer;
 let conn;
 let isReceiving = false;
-let version = 0;
-let pendingOperations = [];
 let peerCursorMarker = null;
 let peerCursorTimeout = null;
 
@@ -96,6 +96,14 @@ function switchFile(name) {
         }[ext] || 'text';
         editor.setOption('mode', mode);
         
+        if (conn?.open) {
+            conn.send({
+                type: 'switchFile',
+                filename: name,
+                content: files[name] || ''
+            });
+        }
+        
         renderFileList();
     } catch (error) {
         alert('Failed to switch file: ' + error.message);
@@ -144,7 +152,14 @@ function handleNewFile(event) {
         saveFile(finalName, '');
         setCurrentFileName(finalName);
         editor.setValue('');
-        renderFileList();
+        
+        if (conn?.open) {
+            conn.send({
+                type: 'createFile',
+                filename: finalName,
+                content: ''
+            });
+        }
         
         const ext = finalName.split('.').pop().toLowerCase();
         const mode = {
@@ -156,6 +171,7 @@ function handleNewFile(event) {
         editor.setOption('mode', mode);
         
         closeNewFileModal();
+        renderFileList();
     } catch (error) {
         alert(error.message);
     }
@@ -168,6 +184,13 @@ function deleteSelectedFile(name) {
         const files = getFiles();
         delete files[name];
         localStorage.setItem('files', JSON.stringify(files));
+        
+        if (conn?.open) {
+            conn.send({
+                type: 'deleteFile',
+                filename: name
+            });
+        }
         
         const remainingFiles = Object.keys(files);
         if (remainingFiles.length > 0) {
@@ -201,7 +224,7 @@ class TextOperation {
         this.operation = operation;
         this.position = position;
         this.chars = chars;
-        this.version = version++;
+        this.version = 0;
     }
 
     transform(other) {
@@ -321,13 +344,39 @@ function createCursorWidget() {
     return cursorEl;
 }
 
+function updatePeerCursor(position) {
+    try {
+        if (peerCursorMarker) {
+            peerCursorMarker.clear();
+        }
+        const cursorPos = editor.posFromIndex(position);
+        peerCursorMarker = editor.setBookmark(cursorPos, {
+            widget: createCursorWidget(),
+            insertLeft: true
+        });
+
+        if (peerCursorTimeout) {
+            clearTimeout(peerCursorTimeout);
+        }
+        peerCursorTimeout = setTimeout(() => {
+            if (peerCursorMarker) {
+                peerCursorMarker.clear();
+                peerCursorMarker = null;
+            }
+        }, 2000);
+    } catch (error) {
+        console.error('Failed to update peer cursor:', error);
+    }
+}
+
 function setupConnection() {
     conn.on('open', () => {
         updateConnectionStatus('connected', 'Connected to peer');
         conn.send({ 
-            type: 'init', 
-            content: editor.getValue(), 
-            version: version 
+            type: 'init',
+            files: getFiles(),
+            versions: versions,
+            currentFile: getCurrentFileName()
         });
     });
 
@@ -348,39 +397,60 @@ function setupConnection() {
         isReceiving = true;
         try {
             if (data.type === 'operation') {
+                const targetFile = data.filename;
+                const files = getFiles();
+                let content = files[targetFile] || '';
+
                 const operation = new TextOperation(data.operation, data.position, data.chars);
-                pendingOperations.forEach(op => operation.transform(op));
-                editor.setValue(operation.apply(editor.getValue()));
+                operation.version = data.version;
+                const pending = pendingOperations[targetFile] || [];
+                pending.forEach(op => operation.transform(op));
+                content = operation.apply(content);
+                saveFile(targetFile, content);
 
-                const cursorPosition = data.operation === 'insert' 
-                    ? data.position + data.chars.length 
-                    : data.position;
+                if (targetFile === getCurrentFileName()) {
+                    editor.setValue(content);
+                    
+                    const cursorPosition = data.operation === 'insert' 
+                        ? data.position + data.chars.length 
+                        : data.position;
+                    updatePeerCursor(cursorPosition);
+                }
 
-                const cursorPos = editor.posFromIndex(cursorPosition);
+                versions[targetFile] = (versions[targetFile] || 0) + 1;
+                pendingOperations[targetFile] = pendingOperations[targetFile] || [];
+                pendingOperations[targetFile].push(operation);
 
-                if (peerCursorMarker) peerCursorMarker.clear();
-                peerCursorMarker = editor.doc.setBookmark(cursorPos, {
-                    widget: createCursorWidget(),
-                    insertLeft: true
-                });
-
-                if (peerCursorTimeout) clearTimeout(peerCursorTimeout);
-                peerCursorTimeout = setTimeout(() => {
-                    if (peerCursorMarker) {
-                        peerCursorMarker.clear();
-                        peerCursorMarker = null;
-                    }
-                }, 2000);
-            } else if (data.type === 'cursor') {
-                const cursorPos = editor.posFromIndex(data.position);
-                if (peerCursorMarker) peerCursorMarker.clear();
-                peerCursorMarker = editor.doc.setBookmark(cursorPos, {
-                    widget: createCursorWidget(),
-                    insertLeft: true
-                });
-            } else if (data.type === 'init') {
+                if (targetFile === getCurrentFileName()) {
+                    const cursorPosition = data.operation === 'insert' 
+                        ? data.position + data.chars.length 
+                        : data.position;
+                    updatePeerCursor(cursorPosition);
+                }
+            } else if (data.type === 'switchFile') {
+                const current = getCurrentFileName();
+                if (current) {
+                    saveFile(current, editor.getValue());
+                }
+                saveFile(data.filename, data.content);
+                setCurrentFileName(data.filename);
                 editor.setValue(data.content);
-                version = data.version;
+                renderFileList();
+            } else if (data.type === 'createFile') {
+                saveFile(data.filename, data.content);
+                renderFileList();
+            } else if (data.type === 'deleteFile') {
+                const files = getFiles();
+                delete files[data.filename];
+                localStorage.setItem('files', JSON.stringify(files));
+                renderFileList();
+            } else if (data.type === 'init') {
+                localStorage.setItem('files', JSON.stringify(data.files));
+                versions = data.versions || {};
+                switchFile(data.currentFile);
+                renderFileList();
+            } else if (data.type === 'cursor' && getCurrentFileName() === data.filename) {
+                updatePeerCursor(data.position);
             }
         } catch (error) {
             updateConnectionStatus('error', 'Sync error: ' + error.message);
@@ -392,6 +462,7 @@ function setupConnection() {
 editor.on('change', (cm, change) => {
     if (!isReceiving && conn?.open) {
         try {
+            const currentFile = getCurrentFileName();
             const fromIndex = editor.indexFromPos(change.from);
             const toIndex = editor.indexFromPos(change.to);
 
@@ -404,9 +475,15 @@ editor.on('change', (cm, change) => {
                 operation = new TextOperation('insert', fromIndex, insertedText);
             }
 
-            pendingOperations.push(operation);
+            versions[currentFile] = (versions[currentFile] || 0) + 1;
+            operation.version = versions[currentFile];
+            
+            pendingOperations[currentFile] = pendingOperations[currentFile] || [];
+            pendingOperations[currentFile].push(operation);
+
             conn.send({
                 type: 'operation',
+                filename: currentFile,
                 operation: operation.operation,
                 position: operation.position,
                 chars: operation.chars,
@@ -416,11 +493,12 @@ editor.on('change', (cm, change) => {
             const cursorPos = editor.getCursor();
             conn.send({
                 type: 'cursor',
+                filename: currentFile,
                 position: editor.indexFromPos(cursorPos)
             });
 
-            if (pendingOperations.length > 50) {
-                pendingOperations = pendingOperations.slice(-50);
+            if (pendingOperations[currentFile].length > 50) {
+                pendingOperations[currentFile] = pendingOperations[currentFile].slice(-50);
             }
         } catch (error) {
             updateConnectionStatus('error', 'Failed to send changes: ' + error.message);
