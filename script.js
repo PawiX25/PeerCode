@@ -315,6 +315,12 @@ function connectToPeer() {
     }
 }
 
+function createCursorWidget() {
+    const cursorEl = document.createElement('div');
+    cursorEl.className = 'peer-cursor';
+    return cursorEl;
+}
+
 function setupConnection() {
     conn.on('open', () => {
         updateConnectionStatus('connected', 'Connected to peer');
@@ -353,7 +359,10 @@ function setupConnection() {
                 const cursorPos = editor.posFromIndex(cursorPosition);
 
                 if (peerCursorMarker) peerCursorMarker.clear();
-                peerCursorMarker = editor.markText(cursorPos, cursorPos, { className: 'peer-cursor' });
+                peerCursorMarker = editor.doc.setBookmark(cursorPos, {
+                    widget: createCursorWidget(),
+                    insertLeft: true
+                });
 
                 if (peerCursorTimeout) clearTimeout(peerCursorTimeout);
                 peerCursorTimeout = setTimeout(() => {
@@ -362,6 +371,13 @@ function setupConnection() {
                         peerCursorMarker = null;
                     }
                 }, 2000);
+            } else if (data.type === 'cursor') {
+                const cursorPos = editor.posFromIndex(data.position);
+                if (peerCursorMarker) peerCursorMarker.clear();
+                peerCursorMarker = editor.doc.setBookmark(cursorPos, {
+                    widget: createCursorWidget(),
+                    insertLeft: true
+                });
             } else if (data.type === 'init') {
                 editor.setValue(data.content);
                 version = data.version;
@@ -395,6 +411,12 @@ editor.on('change', (cm, change) => {
                 position: operation.position,
                 chars: operation.chars,
                 version: operation.version
+            });
+
+            const cursorPos = editor.getCursor();
+            conn.send({
+                type: 'cursor',
+                position: editor.indexFromPos(cursorPos)
             });
 
             if (pendingOperations.length > 50) {

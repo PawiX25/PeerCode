@@ -49,8 +49,16 @@
         }
         .CodeMirror-linenumber { color: rgba(255, 255, 255, 0.3); }
         .peer-cursor {
-            border-left: 2px solid var(--accent);
-            box-shadow: 0 0 10px var(--accent);
+            border-left: 2px solid #00ff9d !important;
+            height: 0.8em !important;
+            margin-top: -0.2em;
+            box-shadow: 0 0 8px rgba(0, 255, 157, 0.5);
+            position: relative;
+            z-index: 10;
+            background: linear-gradient(90deg, rgba(0, 255, 157, 0.15) 0%, transparent 100%);
+            width: 0 !important;
+            display: inline-block;
+            pointer-events: none;
         }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
