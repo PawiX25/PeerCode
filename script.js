@@ -6,6 +6,7 @@ let conn;
 let isReceiving = false;
 let peerCursorMarker = null;
 let peerCursorTimeout = null;
+let localCursorColor = '#00ff9d';
 
 function getFiles() {
     return JSON.parse(localStorage.getItem('files')) || {};
@@ -76,6 +77,16 @@ function renderFileList() {
     });
 }
 
+function getFileMode(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    return {
+        'js': 'javascript',
+        'css': 'css',
+        'html': 'xml',
+        'json': 'javascript'
+    }[ext] || 'text';
+}
+
 function switchFile(name) {
     try {
         const currentFile = getCurrentFileName();
@@ -87,20 +98,16 @@ function switchFile(name) {
         const files = getFiles();
         editor.setValue(files[name] || '');
         
-        const ext = name.split('.').pop().toLowerCase();
-        const mode = {
-            'js': 'javascript',
-            'css': 'css',
-            'html': 'xml',
-            'json': 'javascript'
-        }[ext] || 'text';
+        const mode = getFileMode(name);
         editor.setOption('mode', mode);
         
         if (conn?.open) {
             conn.send({
                 type: 'switchFile',
                 filename: name,
-                content: files[name] || ''
+                content: files[name] || '',
+                color: localCursorColor,
+                mode: mode 
             });
         }
         
@@ -153,22 +160,17 @@ function handleNewFile(event) {
         setCurrentFileName(finalName);
         editor.setValue('');
         
+        const mode = getFileMode(finalName);
+        editor.setOption('mode', mode);
+        
         if (conn?.open) {
             conn.send({
                 type: 'createFile',
                 filename: finalName,
-                content: ''
+                content: '',
+                mode: mode 
             });
         }
-        
-        const ext = finalName.split('.').pop().toLowerCase();
-        const mode = {
-            'js': 'javascript',
-            'css': 'css',
-            'html': 'xml',
-            'json': 'javascript'
-        }[ext] || 'text';
-        editor.setOption('mode', mode);
         
         closeNewFileModal();
         renderFileList();
@@ -217,6 +219,22 @@ document.addEventListener('DOMContentLoaded', () => {
         setCurrentFileName(defaultName);
     }
     renderFileList();
+    const colorPicker = document.getElementById('cursorColor');
+    if (colorPicker) {
+        localCursorColor = colorPicker.value;
+        colorPicker.addEventListener('input', (e) => {
+            localCursorColor = e.target.value;
+            if (conn?.open) {
+                const cursorPos = editor.getCursor();
+                conn.send({
+                    type: 'cursor',
+                    filename: getCurrentFileName(),
+                    position: editor.indexFromPos(cursorPos),
+                    color: localCursorColor
+                });
+            }
+        });
+    }
 });
 
 class TextOperation {
@@ -338,20 +356,23 @@ function connectToPeer() {
     }
 }
 
-function createCursorWidget() {
+function createCursorWidget(color) {
     const cursorEl = document.createElement('div');
     cursorEl.className = 'peer-cursor';
+    cursorEl.style.setProperty('--cursor-color', color);
+    cursorEl.style.setProperty('--cursor-glow', `${color}77`);
+    cursorEl.style.setProperty('--cursor-bg', `${color}26`);
     return cursorEl;
 }
 
-function updatePeerCursor(position) {
+function updatePeerCursor(position, color = '#00ff9d') {
     try {
         if (peerCursorMarker) {
             peerCursorMarker.clear();
         }
         const cursorPos = editor.posFromIndex(position);
         peerCursorMarker = editor.setBookmark(cursorPos, {
-            widget: createCursorWidget(),
+            widget: createCursorWidget(color),
             insertLeft: true
         });
 
@@ -376,7 +397,8 @@ function setupConnection() {
             type: 'init',
             files: getFiles(),
             versions: versions,
-            currentFile: getCurrentFileName()
+            currentFile: getCurrentFileName(),
+            color: localCursorColor
         });
     });
 
@@ -423,7 +445,7 @@ function setupConnection() {
                     const cursorPosition = data.operation === 'insert' 
                         ? data.position + data.chars.length 
                         : data.position;
-                    updatePeerCursor(cursorPosition);
+                    updatePeerCursor(cursorPosition, data.color || '#00ff9d');
                 }
 
                 versions[targetFile] = (versions[targetFile] || 0) + 1;
@@ -437,9 +459,13 @@ function setupConnection() {
                 saveFile(data.filename, data.content);
                 setCurrentFileName(data.filename);
                 editor.setValue(data.content);
+                editor.setOption('mode', data.mode || getFileMode(data.filename));
                 renderFileList();
             } else if (data.type === 'createFile') {
                 saveFile(data.filename, data.content);
+                if (data.filename === getCurrentFileName()) {
+                    editor.setOption('mode', data.mode || getFileMode(data.filename));
+                }
                 renderFileList();
             } else if (data.type === 'deleteFile') {
                 const files = getFiles();
@@ -452,7 +478,7 @@ function setupConnection() {
                 switchFile(data.currentFile);
                 renderFileList();
             } else if (data.type === 'cursor' && getCurrentFileName() === data.filename) {
-                updatePeerCursor(data.position);
+                updatePeerCursor(data.position, data.color || '#00ff9d');
             }
         } catch (error) {
             updateConnectionStatus('error', 'Sync error: ' + error.message);
@@ -474,7 +500,8 @@ function sendOperation(filename, operation) {
         operation: operation.operation,
         position: operation.position,
         chars: operation.chars,
-        version: operation.version
+        version: operation.version,
+        color: localCursorColor
     });
 
     if (pendingOperations[filename].length > 50) {
@@ -505,7 +532,8 @@ editor.on('change', (cm, change) => {
             conn.send({
                 type: 'cursor',
                 filename: currentFile,
-                position: editor.indexFromPos(cursorPos)
+                position: editor.indexFromPos(cursorPos),
+                color: localCursorColor
             });
         } catch (error) {
             updateConnectionStatus('error', 'Failed to send changes: ' + error.message);
