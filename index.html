@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PeerCode Studio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/theme/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #00ff9d;
+            --bg-dark: #0a0a0a;
+            --bg-glass: rgba(255, 255, 255, 0.03);
+        }
+        body {
+            background: radial-gradient(circle at 50% -50%, #1a1a1a, var(--bg-dark));
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glass {
+            background: rgba(20, 20, 20, 0.7);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glass-hover:hover {
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.1);
+        }
+        .accent-glow {
+            text-shadow: 0 0 10px var(--accent);
+        }
+        .CodeMirror {
+            height: calc(100vh - 4rem);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            background: transparent !important;
+            color: #fff;
+        }
+        .CodeMirror-gutters {
+            background: rgba(0, 0, 0, 0.2) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .CodeMirror-linenumber { color: rgba(255, 255, 255, 0.3); }
+        .peer-cursor {
+            border-left: 2px solid var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+        .animate-pulse-slow { animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes slide-in {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .slide-in { animation: slide-in 0.3s ease-out; }
+        .cm-s-monokai.CodeMirror { 
+            background: rgba(20, 20, 20, 0.7) !important; 
+        }
+        .cm-s-monokai .CodeMirror-gutters {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+    </style>
+</head>
+<body class="text-gray-300 h-screen flex overflow-hidden">
+    <div class="w-72 glass border-r border-gray-800 flex flex-col slide-in">
+        <div class="p-4 flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00ff9d] to-[#00a6ff] flex items-center justify-center">
+                <i class="fas fa-code text-black text-lg"></i>
+            </div>
+            <span class="text-lg font-semibold text-white accent-glow">PeerCode</span>
+        </div>
+        <div class="p-4 flex items-center justify-between">
+            <h2 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Files</h2>
+            <button onclick="createNewFile()" class="p-2 rounded hover:bg-white/5 transition-colors">
+                <i class="fas fa-plus text-[#00ff9d]"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul id="file-list" class="py-2"></ul>
+        </div>
+    </div>
+    <div class="flex-1 flex flex-col">
+        <div class="h-16 glass flex items-center px-6 justify-between">
+            <div class="flex items-center space-x-4">
+                <div id="connection-status" class="text-sm rounded-md px-3 py-1.5 glass"></div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="glass px-4 py-1.5 rounded-md flex items-center space-x-3">
+                    <span class="text-xs text-gray-400">YOUR ID</span>
+                    <input type="text" id="peer-id" class="bg-transparent w-32 text-sm" readonly>
+                </div>
+                <div class="glass px-4 py-1.5 rounded-md flex items-center space-x-3">
+                    <span class="text-xs text-gray-400">CONNECT TO</span>
+                    <input type="text" id="connect-to" class="bg-transparent w-32 text-sm" placeholder="Peer ID">
+                </div>
+                <button onclick="connectToPeer()" class="px-4 py-1.5 rounded-md bg-gradient-to-r from-[#00ff9d] to-[#00a6ff] text-black font-medium text-sm hover:shadow-lg hover:shadow-[#00ff9d]/20 transition-all">
+                    <i class="fas fa-link mr-2"></i>Connect
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 overflow-hidden p-4">
+            <div class="h-full glass rounded-lg overflow-hidden">
+                <textarea id="editor"></textarea>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
