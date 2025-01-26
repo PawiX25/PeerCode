@@ -121,6 +121,56 @@
             </div>
         </div>
     </div>
+    <div id="new-file-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="glass rounded-xl w-[400px] p-6 shadow-2xl shadow-black/20 scale-100 opacity-100 transition-all duration-200">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-white">Create New File</h3>
+                <button onclick="closeNewFileModal()" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="new-file-form" onsubmit="handleNewFile(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">File Name</label>
+                    <div class="relative">
+                        <input type="text" 
+                               id="new-file-name" 
+                               class="w-full bg-black/20 border border-gray-800 rounded-md px-4 py-2 text-white focus:border-[#00ff9d] transition-colors outline-none"
+                               placeholder="example.js">
+                        <div class="absolute right-3 top-2.5 text-gray-500 text-sm"></div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">File Type</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" onclick="setFileType('js')" class="file-type-btn px-3 py-2 rounded-md text-sm glass-hover transition-all">
+                            <i class="fab fa-js text-yellow-500 mr-2"></i>JS
+                        </button>
+                        <button type="button" onclick="setFileType('html')" class="file-type-btn px-3 py-2 rounded-md text-sm glass-hover transition-all">
+                            <i class="fab fa-html5 text-orange-500 mr-2"></i>HTML
+                        </button>
+                        <button type="button" onclick="setFileType('css')" class="file-type-btn px-3 py-2 rounded-md text-sm glass-hover transition-all">
+                            <i class="fab fa-css3 text-blue-500 mr-2"></i>CSS
+                        </button>
+                        <button type="button" onclick="setFileType('txt')" class="file-type-btn px-3 py-2 rounded-md text-sm glass-hover transition-all">
+                            <i class="fas fa-file-alt text-gray-400 mr-2"></i>TXT
+                        </button>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" 
+                            onclick="closeNewFileModal()" 
+                            class="px-4 py-2 rounded-md text-sm text-gray-400 hover:text-white transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 rounded-md bg-gradient-to-r from-[#00ff9d] to-[#00a6ff] text-black font-medium text-sm hover:shadow-lg hover:shadow-[#00ff9d]/20 transition-all">
+                        Create File
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

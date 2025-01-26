@@ -103,16 +103,42 @@ function switchFile(name) {
 }
 
 function createNewFile() {
+    const modal = document.getElementById('new-file-modal');
+    modal.classList.remove('hidden');
+}
+
+function closeNewFileModal() {
+    const modal = document.getElementById('new-file-modal');
+    modal.classList.add('hidden');
+    document.getElementById('new-file-name').value = '';
+    document.querySelectorAll('.file-type-btn').forEach(btn => {
+        btn.classList.remove('bg-[#00ff9d]/10', 'text-[#00ff9d]');
+    });
+}
+
+function setFileType(ext) {
+    const input = document.getElementById('new-file-name');
+    const fileName = input.value.split('.')[0] || 'untitled';
+    input.value = `${fileName}.${ext}`;
+    
+    document.querySelectorAll('.file-type-btn').forEach(btn => {
+        btn.classList.remove('bg-[#00ff9d]/10', 'text-[#00ff9d]');
+    });
+    event.currentTarget.classList.add('bg-[#00ff9d]/10', 'text-[#00ff9d]');
+}
+
+function handleNewFile(event) {
+    event.preventDefault();
+    
     try {
-        const fileName = prompt('Enter file name:');
-        if (!fileName) return;
+        const fileName = document.getElementById('new-file-name').value;
+        if (!fileName) throw new Error('Please enter a file name');
         
         const finalName = fileName.includes('.') ? fileName : `${fileName}.txt`;
         
         const files = getFiles();
         if (finalName in files) {
-            alert('File already exists!');
-            return;
+            throw new Error('File already exists!');
         }
         
         saveFile(finalName, '');
@@ -128,8 +154,10 @@ function createNewFile() {
             'json': 'javascript'
         }[ext] || 'text';
         editor.setOption('mode', mode);
+        
+        closeNewFileModal();
     } catch (error) {
-        alert('Failed to create file: ' + error.message);
+        alert(error.message);
     }
 }
 
