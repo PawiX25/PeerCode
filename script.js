@@ -409,7 +409,16 @@ function setupConnection() {
                 saveFile(targetFile, content);
 
                 if (targetFile === getCurrentFileName()) {
-                    editor.setValue(content);
+                    editor.operation(() => {
+                        const pos = editor.posFromIndex(operation.position);
+                        if (operation.operation === 'insert') {
+                            editor.replaceRange(operation.chars, pos);
+                        } else {
+                            const from = pos;
+                            const to = editor.posFromIndex(operation.position + operation.chars.length);
+                            editor.replaceRange('', from, to);
+                        }
+                    });
                     
                     const cursorPosition = data.operation === 'insert' 
                         ? data.position + data.chars.length 
@@ -420,13 +429,6 @@ function setupConnection() {
                 versions[targetFile] = (versions[targetFile] || 0) + 1;
                 pendingOperations[targetFile] = pendingOperations[targetFile] || [];
                 pendingOperations[targetFile].push(operation);
-
-                if (targetFile === getCurrentFileName()) {
-                    const cursorPosition = data.operation === 'insert' 
-                        ? data.position + data.chars.length 
-                        : data.position;
-                    updatePeerCursor(cursorPosition);
-                }
             } else if (data.type === 'switchFile') {
                 const current = getCurrentFileName();
                 if (current) {
