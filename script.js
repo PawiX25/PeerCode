@@ -7,6 +7,8 @@ let isReceiving = false;
 let peerCursorMarker = null;
 let peerCursorTimeout = null;
 let localCursorColor = '#00ff9d';
+let saveTimeout = null;
+let lastSaved = Date.now();
 
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
@@ -33,6 +35,7 @@ function saveFile(name, content) {
     const files = getFiles();
     files[name] = content;
     localStorage.setItem('files', JSON.stringify(files));
+    updateSaveIndicator(true);
 }
 
 function getCurrentFileName() {
@@ -52,6 +55,7 @@ function renderFileList() {
     Object.keys(files).forEach(name => {
         const li = document.createElement('li');
         li.className = 'mx-2 mb-1 group transition-all duration-200';
+        li.setAttribute('data-filename', name);
         
         const fileContent = document.createElement('div');
         fileContent.className = `flex items-center px-3 py-2 rounded-md text-sm cursor-pointer transition-all ${
@@ -265,6 +269,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     color: localCursorColor
                 });
             }
+        });
+    }
+
+    const searchInput = document.getElementById('file-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            filterFiles(e.target.value);
         });
     }
 });
@@ -572,6 +583,16 @@ editor.on('change', (cm, change) => {
         }
     }
     
+    if (saveTimeout) clearTimeout(saveTimeout);
+    updateSaveIndicator(false);
+    
+    saveTimeout = setTimeout(() => {
+        const currentFile = getCurrentFileName();
+        if (currentFile) {
+            saveFile(currentFile, editor.getValue());
+        }
+    }, 1000);
+    
     const currentFile = getCurrentFileName();
     if (currentFile) {
         saveFile(currentFile, editor.getValue());
@@ -587,3 +608,33 @@ window.addEventListener('unload', () => {
     if (conn) conn.close();
     if (peer) peer.destroy();
 });
+
+function filterFiles(searchTerm) {
+    const fileList = document.getElementById('file-list');
+    const files = getFiles();
+    const terms = searchTerm.toLowerCase().split(' ');
+    
+    Object.keys(files).forEach(name => {
+        const li = fileList.querySelector(`[data-filename="${name}"]`);
+        if (!li) return;
+        
+        const matches = terms.every(term => 
+            name.toLowerCase().includes(term) || 
+            files[name].toLowerCase().includes(term)
+        );
+        
+        li.style.display = matches ? 'block' : 'none';
+    });
+}
+
+function updateSaveIndicator(saved = false) {
+    const indicator = document.getElementById('save-indicator');
+    if (saved) {
+        indicator.textContent = 'All changes saved';
+        indicator.className = 'text-xs text-gray-400 transition-colors duration-200';
+        lastSaved = Date.now();
+    } else {
+        indicator.textContent = 'Saving...';
+        indicator.className = 'text-xs text-[var(--accent)] transition-colors duration-200';
+    }
+}

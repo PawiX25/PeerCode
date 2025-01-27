@@ -54,7 +54,7 @@
             color: #fff;
         }
         .CodeMirror-gutters {
-            background: rgba(0, 0, 0, 0.2) !important;
+            background: rgba(0, 0, 0, 2) !important;
             border-right: 1px solid rgba(255, 255, 255, 0.05);
         }
         .CodeMirror-linenumber { color: rgba(255, 255, 255, 0.3); }
@@ -123,9 +123,21 @@
         </div>
         <div class="p-4 flex items-center justify-between">
             <h2 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Files</h2>
-            <button onclick="createNewFile()" class="p-2 rounded hover:bg-white/5 transition-colors">
-                <i class="fas fa-plus text-[#00ff9d]"></i>
-            </button>
+            <div class="flex items-center space-x-2">
+                <div id="save-indicator" class="text-xs text-gray-400"></div>
+                <button onclick="createNewFile()" class="p-2 rounded hover:bg-white/5 transition-colors">
+                    <i class="fas fa-plus text-[var(--accent)]"></i>
+                </button>
+            </div>
+        </div>
+        <div class="px-4 mb-2">
+            <div class="relative">
+                <input type="text" 
+                       id="file-search" 
+                       class="w-full bg-black/20 border border-gray-800 rounded-md px-4 py-2 text-sm text-white focus:border-[var(--accent)] transition-colors outline-none"
+                       placeholder="Search files...">
+                <i class="fas fa-search absolute right-3 top-3 text-gray-400 text-xs"></i>
+            </div>
         </div>
         <div class="flex-1 overflow-y-auto">
             <ul id="file-list" class="py-2"></ul>
