@@ -31,7 +31,7 @@ A real-time collaborative code editor that enables peer-to-peer coding sessions 
 ## File Management
 
 - Create new files using the + button in the sidebar
-- Choose from multiple file types (JS, HTML, CSS, TXT)
+- Choose from multiple file types (JS, HTML, CSS, TXT, PY, RB, PHP, MD)
 - Switch between files using the sidebar
 - Files are automatically saved locally
 
