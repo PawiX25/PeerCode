@@ -8,6 +8,23 @@ let peerCursorMarker = null;
 let peerCursorTimeout = null;
 let localCursorColor = '#00ff9d';
 
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    
+    const colorPicker = document.getElementById('cursorColor');
+    if (colorPicker) {
+        colorPicker.value = theme === 'purple' ? '#bd00ff' : '#00ff9d';
+        localCursorColor = colorPicker.value;
+    }
+}
+
+function toggleTheme() {
+    const currentTheme = localStorage.getItem('theme') || 'green';
+    const newTheme = currentTheme === 'green' ? 'purple' : 'green';
+    setTheme(newTheme);
+}
+
 function getFiles() {
     return JSON.parse(localStorage.getItem('files')) || {};
 }
@@ -39,7 +56,7 @@ function renderFileList() {
         const fileContent = document.createElement('div');
         fileContent.className = `flex items-center px-3 py-2 rounded-md text-sm cursor-pointer transition-all ${
             name === currentFile 
-                ? 'bg-[#00ff9d]/10 text-[#00ff9d] shadow-lg shadow-[#00ff9d]/10' 
+                ? 'bg-[var(--accent)]/10 text-[var(--accent)] shadow-lg shadow-[var(--accent)]/10' 
                 : 'text-gray-400 hover:bg-white/5'
         }`;
         
@@ -54,7 +71,7 @@ function renderFileList() {
             'md': 'fas fa-file-alt'
         }[ext] || 'fas fa-file-code';
         
-        icon.className = `${iconClass} mr-3 ${name === currentFile ? 'text-[#00ff9d]' : 'text-gray-400'}`;
+        icon.className = `${iconClass} mr-3 ${name === currentFile ? 'text-[var(--accent)]' : 'text-gray-400'}`;
         
         const fileName = document.createElement('span');
         fileName.textContent = name;
@@ -137,9 +154,9 @@ function setFileType(ext) {
     input.value = `${fileName}.${ext}`;
     
     document.querySelectorAll('.file-type-btn').forEach(btn => {
-        btn.classList.remove('bg-[#00ff9d]/10', 'text-[#00ff9d]');
+        btn.classList.remove('bg-[var(--accent)]/10', 'text-[var(--accent)]');
     });
-    event.currentTarget.classList.add('bg-[#00ff9d]/10', 'text-[#00ff9d]');
+    event.currentTarget.classList.add('bg-[var(--accent)]/10', 'text-[var(--accent)]');
 }
 
 function handleNewFile(event) {
@@ -219,8 +236,19 @@ document.addEventListener('DOMContentLoaded', () => {
         setCurrentFileName(defaultName);
     }
     renderFileList();
+   
+    const savedTheme = localStorage.getItem('theme') || 'green';
+    setTheme(savedTheme);
+    
+    
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+
     const colorPicker = document.getElementById('cursorColor');
     if (colorPicker) {
+        colorPicker.value = savedTheme === 'purple' ? '#bd00ff' : '#00ff9d';
         localCursorColor = colorPicker.value;
         colorPicker.addEventListener('input', (e) => {
             localCursorColor = e.target.value;
