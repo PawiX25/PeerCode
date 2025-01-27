@@ -12,6 +12,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/ruby/ruby.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/php/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/markdown/markdown.min.js"></script>
     <style>
         :root {
             --accent: #00ff9d;
@@ -189,6 +193,20 @@
                         </button>
                         <button type="button" onclick="setFileType('txt')" class="file-type-btn px-3 py-2 rounded-md text-sm glass-hover transition-all">
                             <i class="fas fa-file-alt text-gray-400 mr-2"></i>TXT
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 mt-2">
+                        <button type="button" onclick="setFileType('py')" class="file-type-btn px-3 py-2 rounded-md text-sm glass-hover transition-all">
+                            <i class="fab fa-python text-blue-400 mr-2"></i>PY
+                        </button>
+                        <button type="button" onclick="setFileType('rb')" class="file-type-btn px-3 py-2 rounded-md text-sm glass-hover transition-all">
+                            <i class="fas fa-gem text-red-400 mr-2"></i>RB
+                        </button>
+                        <button type="button" onclick="setFileType('php')" class="file-type-btn px-3 py-2 rounded-md text-sm glass-hover transition-all">
+                            <i class="fab fa-php text-purple-400 mr-2"></i>PHP
+                        </button>
+                        <button type="button" onclick="setFileType('md')" class="file-type-btn px-3 py-2 rounded-md text-sm glass-hover transition-all">
+                            <i class="fab fa-markdown text-white mr-2"></i>MD
                         </button>
                     </div>
                 </div>

@@ -100,7 +100,11 @@ function getFileMode(filename) {
         'js': 'javascript',
         'css': 'css',
         'html': 'xml',
-        'json': 'javascript'
+        'json': 'javascript',
+        'py': 'python',
+        'rb': 'ruby',
+        'php': 'php',
+        'md': 'markdown'
     }[ext] || 'text';
 }
 
