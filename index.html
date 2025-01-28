@@ -272,6 +272,22 @@
             background-color: rgba(239, 68, 68, 0.2);
         }
 
+        button[onclick="connectToPeer"]:hover,
+        button#preview-toggle-btn:hover {
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        #preview-container,
+        .CodeMirror {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        #preview-container.hidden,
+        .CodeMirror.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
     </style>
 </head>
 <body class="text-gray-300 h-screen flex overflow-hidden">
@@ -326,11 +342,17 @@
                 <button onclick="connectToPeer()" class="px-4 py-1.5 rounded-md bg-gradient-to-r from-[var(--accent)] to-[#4c00ff] text-black font-medium text-sm hover:shadow-lg hover:shadow-[var(--accent)]/20 transition-all">
                     <i class="fas fa-link mr-2"></i>Connect
                 </button>
+                <button id="preview-toggle-btn" onclick="toggleHtmlPreview()" class="px-4 py-1.5 rounded-md text-sm bg-gradient-to-r from-[var(--accent)] to-[#4c00ff] text-black hover:shadow-lg hover:shadow-[var(--accent)]/20 transition-all">
+                    Toggle Preview
+                </button>
             </div>
         </div>
         <div class="flex-1 overflow-hidden p-4">
             <div class="h-full glass rounded-lg overflow-hidden">
                 <textarea id="editor"></textarea>
+            </div>
+            <div id="preview-container" class="hidden h-full glass rounded-lg overflow-hidden">
+                <iframe id="preview-frame" class="w-full h-full"></iframe>
             </div>
         </div>
     </div>

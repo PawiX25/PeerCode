@@ -11,13 +11,13 @@ let saveTimeout = null;
 let lastSaved = Date.now();
 let peerSelectionMarkers = new Map();
 let peerSelectionTimeout = null;
+let isHtmlPreview = false;
 
 let settings = {
     theme: 'green',
     fontSize: 14,
     fontFamily: "'JetBrains Mono'",
     tabSize: 2,
-    lineWrap: true,
     autoSave: 5,
     cursorColor: '#00ff9d'
 };
@@ -216,6 +216,21 @@ function switchFile(name) {
         const mode = getFileMode(name);
         editor.setOption('mode', mode);
         
+        const previewBtn = document.getElementById('preview-toggle-btn');
+        const previewContainer = document.getElementById('preview-container');
+        const editorWrapper = editor.getWrapperElement().parentNode;
+        
+        if (mode === 'xml') {
+            previewBtn.classList.remove('hidden');
+        } else {
+            previewBtn.classList.add('hidden');
+        }
+        
+        if (!previewContainer.classList.contains('hidden')) {
+            previewContainer.classList.add('hidden');
+            editorWrapper.classList.remove('hidden');
+        }
+        
         if (conn?.open) {
             conn.send({
                 type: 'switchFile',
@@ -370,6 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveSettings();
         editor.refresh();
         updateSaveIndicator(false);
+        e.target.nextElementSibling.textContent = settings.fontSize + 'px';
     });
     
     const tabSizeSelect = document.getElementById('tab-size');
@@ -946,4 +962,18 @@ function setCustomTheme(name, theme) {
     localCursorColor = theme.accent;
     document.getElementById('cursorColor').value = theme.accent;
     saveSettings();
+}
+
+function toggleHtmlPreview() {
+    const previewContainer = document.getElementById('preview-container');
+    const previewFrame = document.getElementById('preview-frame');
+    const editorWrapper = editor.getWrapperElement().parentNode;
+    if (previewContainer.classList.contains('hidden')) {
+        previewContainer.classList.remove('hidden');
+        editorWrapper.classList.add('hidden');
+        previewFrame.srcdoc = `<style>body { background-color: #FFFDE7; }</style>` + editor.getValue();
+    } else {
+        previewContainer.classList.add('hidden');
+        editorWrapper.classList.remove('hidden');
+    }
 }
