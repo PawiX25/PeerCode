@@ -263,15 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
         localCursorColor = colorPicker.value;
         colorPicker.addEventListener('input', (e) => {
             localCursorColor = e.target.value;
-            if (conn?.open) {
-                const cursorPos = editor.getCursor();
-                conn.send({
-                    type: 'cursor',
-                    filename: getCurrentFileName(),
-                    position: editor.indexFromPos(cursorPos),
-                    color: localCursorColor
-                });
-            }
         });
     }
 
@@ -417,8 +408,10 @@ function updatePeerCursor(position, color = '#00ff9d') {
             peerCursorMarker.clear();
         }
         const cursorPos = editor.posFromIndex(position);
+        const colorPicker = document.getElementById('cursorColor');
+        const localColor = colorPicker ? colorPicker.value : '#00ff9d';
         peerCursorMarker = editor.setBookmark(cursorPos, {
-            widget: createCursorWidget(color),
+            widget: createCursorWidget(localColor),
             insertLeft: true
         });
 
@@ -451,9 +444,12 @@ function updatePeerSelection(start, end, color = '#00ff9d') {
     const startPos = editor.posFromIndex(start);
     const endPos = editor.posFromIndex(end);
     
+    const colorPicker = document.getElementById('cursorColor');
+    const localColor = colorPicker ? colorPicker.value : '#00ff9d';
+    
     const marker = doc.markText(startPos, endPos, {
         className: 'peer-selection',
-        css: `background-color: ${color}26; border: 1px solid ${color}40`,
+        css: `background-color: ${localColor}26; border: 1px solid ${localColor}40`,
         clearOnEnter: false
     });
     
