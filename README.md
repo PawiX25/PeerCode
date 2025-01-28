@@ -11,6 +11,8 @@ A real-time collaborative code editor that enables peer-to-peer coding sessions 
 -  Automatic local saving
 -  Beautiful dark theme interface
 -  Zero server dependency
+-  Custom color themes
+-  HTML file preview
 
 ## Technologies Used
 
