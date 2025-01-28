@@ -365,10 +365,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const fontSizeSlider = document.getElementById('font-size');
     fontSizeSlider.addEventListener('input', (e) => {
-        settings.fontSize = parseInt(e.target.value);
-        e.target.nextElementSibling.textContent = settings.fontSize + 'px';
+        settings.fontSize = e.target.value;
         editor.getWrapperElement().style.fontSize = settings.fontSize + 'px';
         saveSettings();
+        editor.refresh();
+        updateSaveIndicator(false);
     });
     
     const tabSizeSelect = document.getElementById('tab-size');
@@ -895,6 +896,7 @@ function openDeleteThemeModal() {
     Object.entries(customThemes).forEach(([name, theme]) => {
         const item = document.createElement('div');
         item.className = 'flex items-center justify-between p-3 rounded-md hover:bg-gray-700 transition-colors mb-2';
+        item.setAttribute('data-name', name);
         item.innerHTML = `
             <div class="flex items-center space-x-3">
                 <div class="w-8 h-2 rounded" style="background: linear-gradient(to right, ${theme.gradientStart}, ${theme.gradientEnd})"></div>
@@ -916,21 +918,23 @@ function closeDeleteThemeModal() {
 }
 
 function deleteTheme(name) {
-    if (confirm(`Are you sure you want to delete the "${name}" theme?`)) {
-        const customThemes = JSON.parse(localStorage.getItem('customThemes') || '{}');
-        if (customThemes[name]) {
-            delete customThemes[name];
-            localStorage.setItem('customThemes', JSON.stringify(customThemes));
-            
-            const button = document.querySelector(`[data-theme="${name}"]`);
-            if (button) {
-                button.remove();
-            }
-            
-            if (settings.theme === name) {
-                setTheme('green');
-            }
-        }
+    const customThemes = JSON.parse(localStorage.getItem('customThemes') || '{}');
+    delete customThemes[name];
+    localStorage.setItem('customThemes', JSON.stringify(customThemes));
+    
+    const themeList = document.getElementById('custom-theme-list');
+    const themeItem = themeList.querySelector(`[data-name="${name}"]`);
+    if (themeItem) {
+        themeList.removeChild(themeItem);
+    }
+    
+    const button = document.querySelector(`[data-theme="${name}"]`);
+    if (button) {
+        button.remove();
+    }
+    
+    if (settings.theme === name) {
+        setTheme('green');
     }
 }
 
