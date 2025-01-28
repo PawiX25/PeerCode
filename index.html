@@ -12,6 +12,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/python/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/ruby/ruby.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/php/php.min.js"></script>
@@ -141,6 +147,40 @@
         .slider::-webkit-slider-thumb:hover {
             transform: scale(1.2);
             box-shadow: 0 0 10px var(--accent);
+        }
+        
+        #font-family option,
+        #tab-size option {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            padding: 8px;
+        }
+        
+        #font-family:focus,
+        #tab-size:focus {
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+        }
+        
+        #cursorColor {
+            -webkit-appearance: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 2px;
+        }
+        
+        #cursorColor::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        
+        #cursorColor::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+        
+        #cursorColor:hover {
+            border-color: var(--accent);
         }
     </style>
 </head>
@@ -331,6 +371,9 @@
                                 <option value="'Fira Code'">Fira Code</option>
                                 <option value="'Source Code Pro'">Source Code Pro</option>
                                 <option value="'Roboto Mono'">Roboto Mono</option>
+                                <option value="'IBM Plex Mono'">IBM Plex Mono</option>
+                                <option value="'Space Mono'">Space Mono</option>
+                                <option value="'Ubuntu Mono'">Ubuntu Mono</option>
                             </select>
                         </div>
                     </div>
