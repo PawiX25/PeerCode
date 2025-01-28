@@ -9,6 +9,8 @@ let peerCursorTimeout = null;
 let localCursorColor = '#00ff9d';
 let saveTimeout = null;
 let lastSaved = Date.now();
+let peerSelectionMarkers = new Map();
+let peerSelectionTimeout = null;
 
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
@@ -137,6 +139,7 @@ function switchFile(name) {
         }
         
         renderFileList();
+        clearPeerSelections();
     } catch (error) {
         alert('Failed to switch file: ' + error.message);
     }
@@ -433,6 +436,40 @@ function updatePeerCursor(position, color = '#00ff9d') {
     }
 }
 
+function createSelectionWidget(color) {
+    const selectionEl = document.createElement('div');
+    selectionEl.className = 'peer-selection';
+    selectionEl.style.backgroundColor = `${color}26`;
+    selectionEl.style.border = `1px solid ${color}40`;
+    return selectionEl;
+}
+
+function updatePeerSelection(start, end, color = '#00ff9d') {
+    clearPeerSelections();
+    
+    const doc = editor.getDoc();
+    const startPos = editor.posFromIndex(start);
+    const endPos = editor.posFromIndex(end);
+    
+    const marker = doc.markText(startPos, endPos, {
+        className: 'peer-selection',
+        css: `background-color: ${color}26; border: 1px solid ${color}40`,
+        clearOnEnter: false
+    });
+    
+    peerSelectionMarkers.set('current', marker);
+    
+    if (peerSelectionTimeout) {
+        clearTimeout(peerSelectionTimeout);
+    }
+    peerSelectionTimeout = setTimeout(clearPeerSelections, 5000);
+}
+
+function clearPeerSelections() {
+    peerSelectionMarkers.forEach(marker => marker.clear());
+    peerSelectionMarkers.clear();
+}
+
 function setupConnection() {
     conn.on('open', () => {
         updateConnectionStatus('connected', 'Connected to peer');
@@ -452,6 +489,7 @@ function setupConnection() {
             peerCursorMarker = null;
         }
         if (peerCursorTimeout) clearTimeout(peerCursorTimeout);
+        clearPeerSelections();
     });
 
     conn.on('error', (error) => {
@@ -522,6 +560,8 @@ function setupConnection() {
                 renderFileList();
             } else if (data.type === 'cursor' && getCurrentFileName() === data.filename) {
                 updatePeerCursor(data.position, data.color || '#00ff9d');
+            } else if (data.type === 'selection' && getCurrentFileName() === data.filename) {
+                updatePeerSelection(data.start, data.end, data.color || '#00ff9d');
             }
         } catch (error) {
             updateConnectionStatus('error', 'Sync error: ' + error.message);
@@ -596,6 +636,26 @@ editor.on('change', (cm, change) => {
     const currentFile = getCurrentFileName();
     if (currentFile) {
         saveFile(currentFile, editor.getValue());
+    }
+});
+
+editor.on('beforeSelectionChange', (cm, change) => {
+    if (!isReceiving && conn?.open) {
+        const ranges = change.ranges;
+        if (ranges && ranges.length > 0) {
+            const from = editor.indexFromPos(ranges[0].from());
+            const to = editor.indexFromPos(ranges[0].to());
+            
+            if (from !== to) {
+                conn.send({
+                    type: 'selection',
+                    filename: getCurrentFileName(),
+                    start: from,
+                    end: to,
+                    color: localCursorColor
+                });
+            }
+        }
     }
 });
 
