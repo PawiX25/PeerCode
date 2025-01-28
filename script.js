@@ -64,11 +64,50 @@ function toggleSettings() {
 }
 
 function setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    settings.theme = theme;
-    settings.cursorColor = theme === 'purple' ? '#bd00ff' : '#00ff9d';
-    localCursorColor = settings.cursorColor;
+    const defaultThemes = {
+        'green': {
+            accent: '#00ff9d',
+            gradientStart: '#00ff9d',
+            gradientEnd: '#00a6ff'
+        },
+        'purple': {
+            accent: '#bd00ff',
+            gradientStart: '#bd00ff',
+            gradientEnd: '#4c00ff'
+        }
+    };
+
+    if (defaultThemes[theme]) {
+        const defaultTheme = defaultThemes[theme];
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.setProperty('--accent', defaultTheme.accent);
+        document.documentElement.style.setProperty('--accent-gradient', 
+            `linear-gradient(to right, ${defaultTheme.gradientStart}, ${defaultTheme.gradientEnd})`
+        );
+        settings.theme = theme;
+        settings.cursorColor = defaultTheme.accent;
+        localCursorColor = defaultTheme.accent;
+    } else {
+
+        const customThemes = JSON.parse(localStorage.getItem('customThemes') || '{}');
+        if (customThemes[theme]) {
+            const customTheme = customThemes[theme];
+            document.documentElement.style.setProperty('--accent', customTheme.accent);
+            document.documentElement.style.setProperty('--accent-gradient', 
+                `linear-gradient(to right, ${customTheme.gradientStart}, ${customTheme.gradientEnd})`
+            );
+            settings.theme = theme;
+            settings.cursorColor = customTheme.accent;
+            localCursorColor = customTheme.accent;
+        }
+    }
+
     document.getElementById('cursorColor').value = settings.cursorColor;
+    
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('bg-[var(--accent)]/10', btn.dataset.theme === theme);
+    });
+    
     saveSettings();
 }
 
@@ -358,6 +397,15 @@ document.addEventListener('DOMContentLoaded', () => {
         settings.autoSave = parseInt(e.target.value);
         e.target.nextElementSibling.textContent = settings.autoSave + 's';
         saveSettings();
+    });
+
+    const customThemes = JSON.parse(localStorage.getItem('customThemes') || '{}');
+    Object.entries(customThemes).forEach(([name, theme]) => {
+        addCustomThemeButton(name, theme);
+    });
+
+    ['accent-color', 'gradient-start', 'gradient-end'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', updateThemePreview);
     });
 });
 
@@ -779,4 +827,119 @@ function updateSaveIndicator(saved = false) {
         indicator.textContent = 'Saving...';
         indicator.className = 'text-xs text-[var(--accent)] transition-colors duration-200';
     }
+}
+
+function openThemeCreator() {
+    const modal = document.getElementById('theme-creator-modal');
+    modal.classList.remove('hidden');
+    updateThemePreview();
+}
+
+function closeThemeCreator() {
+    const modal = document.getElementById('theme-creator-modal');
+    modal.classList.add('hidden');
+}
+
+function updateThemePreview() {
+    const accentColor = document.getElementById('accent-color').value;
+    const gradientStart = document.getElementById('gradient-start').value;
+    const gradientEnd = document.getElementById('gradient-end').value;
+    const preview = document.getElementById('theme-preview');
+    preview.style.background = `linear-gradient(to right, ${gradientStart}, ${gradientEnd})`;
+}
+
+function saveCustomTheme() {
+    const name = document.getElementById('theme-name').value.trim();
+    if (!name) {
+        alert('Please enter a theme name');
+        return;
+    }
+
+    const theme = {
+        accent: document.getElementById('accent-color').value,
+        gradientStart: document.getElementById('gradient-start').value,
+        gradientEnd: document.getElementById('gradient-end').value
+    };
+
+    let customThemes = JSON.parse(localStorage.getItem('customThemes') || '{}');
+    customThemes[name] = theme;
+    localStorage.setItem('customThemes', JSON.stringify(customThemes));
+
+    addCustomThemeButton(name, theme);
+
+    closeThemeCreator();
+}
+
+function addCustomThemeButton(name, theme) {
+    const themeContainer = document.querySelector('.grid.grid-cols-2');
+    const themeBtn = document.createElement('button');
+    themeBtn.className = 'theme-btn relative p-4 rounded-lg transition-all group';
+    themeBtn.setAttribute('data-theme', name);
+    themeBtn.onclick = () => setCustomTheme(name, theme);
+    themeBtn.innerHTML = `
+        <div class="w-full h-2 rounded" style="background: linear-gradient(to right, ${theme.gradientStart}, ${theme.gradientEnd})"></div>
+        <div class="flex items-center justify-between mt-2">
+            <span class="text-sm">${name}</span>
+        </div>
+    `;
+    themeContainer.appendChild(themeBtn);
+}
+
+function openDeleteThemeModal() {
+    const customThemes = JSON.parse(localStorage.getItem('customThemes') || '{}');
+    const modal = document.getElementById('delete-theme-modal');
+    const themeList = document.getElementById('custom-theme-list');
+    
+    themeList.innerHTML = '';
+    
+    Object.entries(customThemes).forEach(([name, theme]) => {
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between p-3 rounded-md hover:bg-gray-700 transition-colors mb-2';
+        item.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-2 rounded" style="background: linear-gradient(to right, ${theme.gradientStart}, ${theme.gradientEnd})"></div>
+                <span class="text-sm">${name}</span>
+            </div>
+            <button onclick="deleteTheme('${name}')" class="px-3 py-1 rounded-md text-sm bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
+                Delete
+            </button>
+        `;
+        themeList.appendChild(item);
+    });
+    
+    modal.classList.remove('hidden');
+}
+
+function closeDeleteThemeModal() {
+    const modal = document.getElementById('delete-theme-modal');
+    modal.classList.add('hidden');
+}
+
+function deleteTheme(name) {
+    if (confirm(`Are you sure you want to delete the "${name}" theme?`)) {
+        const customThemes = JSON.parse(localStorage.getItem('customThemes') || '{}');
+        if (customThemes[name]) {
+            delete customThemes[name];
+            localStorage.setItem('customThemes', JSON.stringify(customThemes));
+            
+            const button = document.querySelector(`[data-theme="${name}"]`);
+            if (button) {
+                button.remove();
+            }
+            
+            if (settings.theme === name) {
+                setTheme('green');
+            }
+        }
+    }
+}
+
+function setCustomTheme(name, theme) {
+    document.documentElement.style.setProperty('--accent', theme.accent);
+    document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(to right, ${theme.gradientStart}, ${theme.gradientEnd})`);
+    settings.theme = name;
+    settings.cursorColor = theme.accent;
+    localCursorColor = theme.accent;
+    document.getElementById('cursorColor').value = theme.accent;
+    saveSettings();
 }

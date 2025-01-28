@@ -46,7 +46,7 @@
         }
         .glass-hover:hover {
             background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 0 20px rgba(0, 255, 157, 0.1);
+            box-shadow: 0 0 20px var(--accent);
         }
         .accent-glow {
             text-shadow: 0 0 10px var(--accent);
@@ -182,6 +182,96 @@
         #cursorColor:hover {
             border-color: var(--accent);
         }
+        .custom-color-picker {
+            -webkit-appearance: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 2px;
+        }
+        
+        .custom-color-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        
+        .custom-color-picker::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+        
+        .custom-color-picker:hover {
+            border-color: var(--accent);
+        }
+        .theme-btn {
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .theme-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 0.5rem;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+        
+        .theme-btn:hover::after {
+            opacity: 1;
+            box-shadow: 0 0 20px var(--accent);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .theme-btn.active::after {
+            opacity: 1;
+            box-shadow: 0 0 20px var(--accent);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        button[onclick="openThemeCreator"]:hover {
+            box-shadow: 0 0 20px var(--accent);
+        }
+        
+        .theme-btn .fa-trash-alt {
+            font-size: 0.75rem;
+            padding: 0.25rem;
+        }
+        
+        .theme-btn button:hover {
+            transform: scale(1.1);
+        }
+
+        .delete-theme-btn {
+            opacity: 0;
+            padding: 6px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .theme-btn:hover .delete-theme-btn {
+            opacity: 1;
+        }
+        
+        .delete-theme-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .delete-theme-btn:active {
+            transform: scale(0.95);
+        }
+
+        #delete-theme-modal .flex.items-center.justify-between:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        #delete-theme-modal .flex.items-center.justify-between {
+            cursor: pointer;
+        }
+
+        #delete-theme-modal .flex.items-center.justify-between .delete-button:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+
     </style>
 </head>
 <body class="text-gray-300 h-screen flex overflow-hidden">
@@ -319,14 +409,28 @@
             <div class="flex-1 overflow-y-auto p-6 space-y-8">
                 <div class="setting-group pb-6">
                     <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Theme</h3>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="setTheme('green')" class="theme-btn p-4 rounded-lg glass-hover transition-all" data-theme="green">
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <button onclick="setTheme('green')" class="theme-btn relative p-4 rounded-lg transition-all group" data-theme="green">
                             <div class="w-full h-2 rounded bg-[#00ff9d]"></div>
-                            <span class="block mt-2 text-sm">Green</span>
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-sm">Green</span>
+                            </div>
                         </button>
-                        <button onclick="setTheme('purple')" class="theme-btn p-4 rounded-lg glass-hover transition-all" data-theme="purple">
+                        <button onclick="setTheme('purple')" class="theme-btn relative p-4 rounded-lg transition-all group">
                             <div class="w-full h-2 rounded bg-[#bd00ff]"></div>
-                            <span class="block mt-2 text-sm">Purple</span>
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-sm">Purple</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="openThemeCreator()" class="w-full p-3 rounded-lg border border-dashed border-gray-700 hover:border-[var(--accent)] text-gray-400 hover:text-[var(--accent)] transition-all">
+                            <i class="fas fa-plus mr-2"></i>
+                            Create Custom Theme
+                        </button>
+                        <button onclick="openDeleteThemeModal()" class="w-full p-3 rounded-lg border border-dashed border-red-800/30 hover:border-red-500/50 text-gray-400 hover:text-red-400 transition-all">
+                            <i class="fas fa-trash-alt mr-2"></i>
+                            Delete Custom Theme
                         </button>
                     </div>
                 </div>
@@ -387,6 +491,63 @@
                         <div class="text-right text-sm text-gray-400 mt-1">5s</div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    <div id="theme-creator-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="glass rounded-xl w-[400px] p-6 shadow-2xl shadow-black/20">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-white">Create Custom Theme</h3>
+                <button onclick="closeThemeCreator()" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-6">
+                <div>
+                    <label class="text-sm text-gray-300 mb-2 block">Theme Name</label>
+                    <input type="text" id="theme-name" class="w-full bg-black/20 border border-gray-800 rounded-md px-4 py-2 text-white focus:border-[var(--accent)] transition-colors outline-none" placeholder="My Custom Theme">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-300 mb-2 block">Accent Color</label>
+                    <input type="color" id="accent-color" class="w-full h-10 rounded cursor-pointer custom-color-picker" value="#00ff9d">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-300 mb-2 block">Gradient Start</label>
+                    <input type="color" id="gradient-start" class="w-full h-10 rounded cursor-pointer custom-color-picker" value="#00ff9d">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-300 mb-2 block">Gradient End</label>
+                    <input type="color" id="gradient-end" class="w-full h-10 rounded cursor-pointer custom-color-picker" value="#00a6ff">
+                </div>
+                <div class="mt-6 p-4 rounded-lg glass">
+                    <label class="text-sm text-gray-400 mb-2 block">Preview</label>
+                    <div id="theme-preview" class="h-16 rounded-lg" style="background: linear-gradient(to right, #00ff9d, #00a6ff)"></div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="closeThemeCreator()" class="px-4 py-2 rounded-md text-sm text-gray-400 hover:text-white transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="saveCustomTheme()" class="px-4 py-2 rounded-md bg-gradient-to-r from-[var(--accent)] to-[#4c00ff] text-black font-medium text-sm hover:shadow-lg hover:shadow-[var(--accent)]/20 transition-all">
+                        Save Theme
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="delete-theme-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="glass rounded-xl w-[400px] p-6 shadow-2xl shadow-black/20">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-white">Delete Custom Theme</h3>
+                <button onclick="closeDeleteThemeModal()" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="custom-theme-list" class="space-y-2 max-h-[60vh] overflow-y-auto">
+            </div>
+            <div class="flex justify-end mt-6">
+                <button onclick="closeDeleteThemeModal()" class="px-4 py-2 rounded-md text-sm text-gray-400 hover:text-white transition-colors">
+                    Close
+                </button>
             </div>
         </div>
     </div>
