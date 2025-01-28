@@ -12,15 +12,64 @@ let lastSaved = Date.now();
 let peerSelectionMarkers = new Map();
 let peerSelectionTimeout = null;
 
+let settings = {
+    theme: 'green',
+    fontSize: 14,
+    fontFamily: "'JetBrains Mono'",
+    tabSize: 2,
+    lineWrap: true,
+    autoSave: 5,
+    cursorColor: '#00ff9d'
+};
+
+function loadSettings() {
+    const savedSettings = localStorage.getItem('settings');
+    if (savedSettings) {
+        settings = JSON.parse(savedSettings);
+        applySettings();
+    }
+}
+
+function saveSettings() {
+    localStorage.setItem('settings', JSON.stringify(settings));
+}
+
+function applySettings() {
+    setTheme(settings.theme);
+    
+    editor.getWrapperElement().style.fontSize = settings.fontSize + 'px';
+    editor.setOption('tabSize', settings.tabSize);
+    editor.setOption('lineWrapping', settings.lineWrap);
+    editor.getWrapperElement().style.fontFamily = settings.fontFamily;
+    
+    document.getElementById('font-size').value = settings.fontSize;
+    document.getElementById('font-size').nextElementSibling.textContent = settings.fontSize + 'px';
+    document.getElementById('tab-size').value = settings.tabSize;
+    document.getElementById('line-wrap').checked = settings.lineWrap;
+    document.getElementById('font-family').value = settings.fontFamily;
+    document.getElementById('cursorColor').value = settings.cursorColor;
+    document.getElementById('auto-save').value = settings.autoSave;
+    document.getElementById('auto-save').nextElementSibling.textContent = settings.autoSave + 's';
+    
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('bg-[var(--accent)]/10', btn.dataset.theme === settings.theme);
+    });
+    
+    localCursorColor = settings.cursorColor;
+}
+
+function toggleSettings() {
+    const panel = document.getElementById('settings-panel');
+    panel.classList.toggle('open');
+}
+
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-    
-    const colorPicker = document.getElementById('cursorColor');
-    if (colorPicker) {
-        colorPicker.value = theme === 'purple' ? '#bd00ff' : '#00ff9d';
-        localCursorColor = colorPicker.value;
-    }
+    settings.theme = theme;
+    settings.cursorColor = theme === 'purple' ? '#bd00ff' : '#00ff9d';
+    localCursorColor = settings.cursorColor;
+    document.getElementById('cursorColor').value = settings.cursorColor;
+    saveSettings();
 }
 
 function toggleTheme() {
@@ -272,6 +321,44 @@ document.addEventListener('DOMContentLoaded', () => {
             filterFiles(e.target.value);
         });
     }
+
+    loadSettings();
+    
+    const fontSizeSlider = document.getElementById('font-size');
+    fontSizeSlider.addEventListener('input', (e) => {
+        settings.fontSize = parseInt(e.target.value);
+        e.target.nextElementSibling.textContent = settings.fontSize + 'px';
+        editor.getWrapperElement().style.fontSize = settings.fontSize + 'px';
+        saveSettings();
+    });
+    
+    const tabSizeSelect = document.getElementById('tab-size');
+    tabSizeSelect.addEventListener('change', (e) => {
+        settings.tabSize = parseInt(e.target.value);
+        editor.setOption('tabSize', settings.tabSize);
+        saveSettings();
+    });
+    
+    const lineWrapToggle = document.getElementById('line-wrap');
+    lineWrapToggle.addEventListener('change', (e) => {
+        settings.lineWrap = e.target.checked;
+        editor.setOption('lineWrapping', settings.lineWrap);
+        saveSettings();
+    });
+    
+    const fontFamilySelect = document.getElementById('font-family');
+    fontFamilySelect.addEventListener('change', (e) => {
+        settings.fontFamily = e.target.value;
+        editor.getWrapperElement().style.fontFamily = settings.fontFamily;
+        saveSettings();
+    });
+    
+    const autoSaveSlider = document.getElementById('auto-save');
+    autoSaveSlider.addEventListener('input', (e) => {
+        settings.autoSave = parseInt(e.target.value);
+        e.target.nextElementSibling.textContent = settings.autoSave + 's';
+        saveSettings();
+    });
 });
 
 class TextOperation {
@@ -473,8 +560,7 @@ function setupConnection() {
             type: 'init',
             files: getFiles(),
             versions: versions,
-            currentFile: getCurrentFileName(),
-            color: localCursorColor
+            currentFile: getCurrentFileName()
         });
     });
 

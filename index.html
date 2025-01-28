@@ -111,6 +111,37 @@
             position: relative;
             z-index: 50;
         }
+        .settings-panel {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
+        }
+        .settings-panel.open {
+            transform: translateX(0);
+        }
+        .setting-group {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px var(--accent);
+        }
     </style>
 </head>
 <body class="text-gray-300 h-screen flex overflow-hidden">
@@ -122,8 +153,8 @@
                 </div>
                 <span class="text-lg font-semibold text-white accent-glow">PeerCode</span>
             </div>
-            <button id="theme-toggle" class="p-2 rounded hover:bg-white/5 transition-colors">
-                <i class="fas fa-palette"></i>
+            <button onclick="toggleSettings()" class="p-2 rounded hover:bg-white/5 transition-colors">
+                <i class="fas fa-cog"></i>
             </button>
         </div>
         <div class="p-4 flex items-center justify-between">
@@ -161,10 +192,6 @@
                 <div class="glass px-4 py-1.5 rounded-md flex items-center space-x-3">
                     <span class="text-xs text-gray-400">CONNECT TO</span>
                     <input type="text" id="connect-to" class="bg-transparent w-32 text-sm" placeholder="Peer ID">
-                </div>
-                <div class="glass px-4 py-1.5 rounded-md flex items-center space-x-3">
-                    <label for="cursorColor" class="text-xs text-gray-400">COLOR</label>
-                    <input type="color" id="cursorColor" class="bg-transparent w-8 h-8 p-0 border-0 outline-none cursor-pointer" value="#00ff9d">
                 </div>
                 <button onclick="connectToPeer()" class="px-4 py-1.5 rounded-md bg-gradient-to-r from-[var(--accent)] to-[#4c00ff] text-black font-medium text-sm hover:shadow-lg hover:shadow-[var(--accent)]/20 transition-all">
                     <i class="fas fa-link mr-2"></i>Connect
@@ -239,6 +266,85 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+    <div id="settings-panel" class="settings-panel fixed right-0 top-0 h-screen w-96 glass z-40">
+        <div class="h-full flex flex-col">
+            <div class="p-6 flex items-center justify-between border-b border-gray-800">
+                <h2 class="text-lg font-semibold text-white">Settings</h2>
+                <button onclick="toggleSettings()" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 space-y-8">
+                <div class="setting-group pb-6">
+                    <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Theme</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="setTheme('green')" class="theme-btn p-4 rounded-lg glass-hover transition-all" data-theme="green">
+                            <div class="w-full h-2 rounded bg-[#00ff9d]"></div>
+                            <span class="block mt-2 text-sm">Green</span>
+                        </button>
+                        <button onclick="setTheme('purple')" class="theme-btn p-4 rounded-lg glass-hover transition-all" data-theme="purple">
+                            <div class="w-full h-2 rounded bg-[#bd00ff]"></div>
+                            <span class="block mt-2 text-sm">Purple</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="setting-group pb-6">
+                    <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Editor</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm text-gray-300 mb-2 block">Font Size</label>
+                            <input type="range" min="10" max="24" value="14" class="slider" id="font-size">
+                            <div class="text-right text-sm text-gray-400 mt-1">14px</div>
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-300 mb-2 block">Tab Size</label>
+                            <select id="tab-size" class="w-full bg-black/20 border border-gray-800 rounded-md px-3 py-2 text-sm">
+                                <option value="2">2 spaces</option>
+                                <option value="4">4 spaces</option>
+                                <option value="8">8 spaces</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm text-gray-300">Line Wrapping</label>
+                            <label class="switch">
+                                <input type="checkbox" id="line-wrap" checked>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group pb-6">
+                    <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Appearance</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm text-gray-300 mb-2 block">Cursor Color</label>
+                            <input type="color" id="cursorColor" class="w-full h-10 rounded cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-300 mb-2 block">Font Family</label>
+                            <select id="font-family" class="w-full bg-black/20 border border-gray-800 rounded-md px-3 py-2 text-sm">
+                                <option value="'JetBrains Mono'">JetBrains Mono</option>
+                                <option value="'Fira Code'">Fira Code</option>
+                                <option value="'Source Code Pro'">Source Code Pro</option>
+                                <option value="'Roboto Mono'">Roboto Mono</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group pb-6">
+                    <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Auto-Save</h3>
+                    <div>
+                        <label class="text-sm text-gray-300 mb-2 block">Interval (seconds)</label>
+                        <input type="range" min="1" max="30" value="5" class="slider" id="auto-save">
+                        <div class="text-right text-sm text-gray-400 mt-1">5s</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>
