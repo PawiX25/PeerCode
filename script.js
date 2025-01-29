@@ -365,7 +365,8 @@ function handleNewFile(event) {
                 type: 'createFile',
                 filename: finalName,
                 content: '',
-                mode: mode 
+                mode: mode,
+                owner: 'local'
             });
         }
         
@@ -401,7 +402,8 @@ function confirmDeleteFile() {
         if (conn?.open) {
             conn.send({
                 type: 'deleteFile',
-                filename: fileToDelete
+                filename: fileToDelete,
+                owner: 'local'
             });
         }
         
