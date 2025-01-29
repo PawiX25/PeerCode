@@ -7,12 +7,19 @@ A real-time collaborative code editor that enables peer-to-peer coding sessions 
 -  Real-time collaborative editing
 -  Peer-to-peer connection using WebRTC
 -  Multi-file support with different syntax highlighting
--  Live cursor tracking
+-  Live cursor and selection tracking
 -  Automatic local saving
 -  Beautiful dark theme interface
 -  Zero server dependency
--  Custom color themes
--  HTML file preview
+-  Custom color themes with gradient support
+-  HTML file live preview
+-  Multiple font families (JetBrains Mono, Fira Code, Source Code Pro, etc.)
+-  Customizable editor settings:
+   - Font size (10-24px)
+   - Tab size (2, 4, or 8 spaces)
+   - Line wrapping toggle
+   - Cursor color customization
+-  File search functionality
 
 ## Technologies Used
 
