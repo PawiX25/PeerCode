@@ -1058,6 +1058,7 @@ function toggleChat() {
     chatPanel.classList.toggle('open');
     if (chatPanel.classList.contains('open')) {
         document.getElementById('chat-notification').classList.add('hidden');
+        document.getElementById('chat-icon').classList.remove('chat-icon-pulse');
         unreadMessages = 0;
         document.getElementById('chat-input').focus();
     } else {
@@ -1111,6 +1112,7 @@ function addMessageToChat(message) {
     if (!document.getElementById('chat-panel').classList.contains('open')) {
         unreadMessages++;
         document.getElementById('chat-notification').classList.remove('hidden');
+        document.getElementById('chat-icon').classList.add('chat-icon-pulse');
     }
 }
 

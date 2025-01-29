@@ -358,6 +358,16 @@
                 transform: translateY(0);
             }
         }
+
+        @keyframes iconPulse {
+            0% { color: var(--accent); transform: scale(1); }
+            50% { color: white; transform: scale(1.2); }
+            100% { color: var(--accent); transform: scale(1); }
+        }
+        
+        .chat-icon-pulse {
+            animation: iconPulse 1s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="text-gray-300 h-screen flex overflow-hidden">
@@ -373,7 +383,7 @@
                 <i class="fas fa-cog"></i>
             </button>
             <button onclick="toggleChat()" class="p-2 rounded hover:bg-white/5 transition-colors relative">
-                <i class="fas fa-comment"></i>
+                <i id="chat-icon" class="fas fa-comment"></i>
                 <div id="chat-notification" class="hidden absolute -top-1 -right-1 w-2 h-2 bg-[var(--accent)] rounded-full"></div>
             </button>
         </div>
