@@ -479,21 +479,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 5000);
         }
     });
-
-    const maxLength = 500;
-    
-    const charCounter = document.createElement('div');
-    charCounter.className = 'text-xs text-gray-400 absolute bottom-2 right-10';
-    chatInput.parentNode.appendChild(charCounter);
-    
-    function updateCharCounter() {
-        const remaining = maxLength - chatInput.value.length;
-        charCounter.textContent = `${remaining}`;
-        charCounter.style.color = remaining < 50 ? 'var(--accent)' : '';
-    }
-    
-    chatInput.addEventListener('input', updateCharCounter);
-    updateCharCounter();
 });
 
 class TextOperation {
@@ -1150,7 +1135,6 @@ function showTypingIndicator() {
                     <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                     <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
                     <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
-        chatMessages.scrollTop = chatMessages.scrollHeight;
                 </div>
             </div>
         `;
@@ -1158,16 +1142,6 @@ function showTypingIndicator() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 }
-
-function hideTypingIndicator() {
-    const chatMessages = document.getElementById('chat-messages');
-    const indicator = chatMessages.querySelector('.typing-indicator');
-    if (indicator) {
-        indicator.remove();
-    }
-}
-    
-
 
 function hideTypingIndicator() {
     const chatMessages = document.getElementById('chat-messages');

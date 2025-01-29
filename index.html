@@ -368,33 +368,14 @@
         .chat-icon-pulse {
             animation: iconPulse 1s ease-in-out infinite;
         }
-
-        .active-indicator {
-            position: absolute;
-            bottom: -2px;
-            right: -2px;
-            width: 12px;
-            height: 12px;
-            background: var(--accent);
-            border: 2px solid #0a0a0a;
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--accent);
-        }
-
-        .logo-container {
-            position: relative;
-        }
     </style>
 </head>
 <body class="text-gray-300 h-screen flex overflow-hidden">
     <div class="w-72 glass border-r border-gray-800 flex flex-col slide-in">
         <div class="p-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="logo-container">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[#00a6ff] flex items-center justify-center">
-                        <i class="fas fa-code text-black text-lg"></i>
-                    </div>
-                    <div class="active-indicator"></div>
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[#00a6ff] flex items-center justify-center">
+                    <i class="fas fa-code text-black text-lg"></i>
                 </div>
                 <span class="text-lg font-semibold text-white accent-glow">PeerCode</span>
             </div>
