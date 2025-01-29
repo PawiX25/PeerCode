@@ -1150,3 +1150,26 @@ function hideTypingIndicator() {
         indicator.remove();
     }
 }
+
+function exportCurrentFile() {
+    try {
+        const currentFile = getCurrentFileName();
+        if (!currentFile) {
+            alert('No file to export!');
+            return;
+        }
+        
+        const content = editor.getValue();
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = currentFile;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    } catch (error) {
+        alert('Failed to export file: ' + error.message);
+    }
+}
