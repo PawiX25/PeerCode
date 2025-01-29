@@ -24,6 +24,10 @@ let settings = {
     cursorColor: '#00ff9d'
 };
 
+let peerFiles = {};
+let peerVersions = {};
+let currentFileOwner = 'local';
+
 function loadSettings() {
     const savedSettings = localStorage.getItem('settings');
     if (savedSettings) {
@@ -125,60 +129,115 @@ function toggleTheme() {
     setTheme(newTheme);
 }
 
-function getFiles() {
-    return JSON.parse(localStorage.getItem('files')) || {};
+function getFiles(owner = 'local') {
+    if (owner === 'local') {
+        return JSON.parse(localStorage.getItem('files')) || {};
+    }
+    return peerFiles;
 }
 
-function saveFile(name, content) {
-    const files = getFiles();
-    files[name] = content;
-    localStorage.setItem('files', JSON.stringify(files));
+function saveFile(name, content, owner = 'local') {
+    if (owner === 'local') {
+        const files = getFiles('local');
+        files[name] = content;
+        localStorage.setItem('files', JSON.stringify(files));
+    } else {
+        peerFiles[name] = content;
+    }
     updateSaveIndicator(true);
 }
 
 function getCurrentFileName() {
-    return localStorage.getItem('currentFile') || '';
+    return {
+        name: localStorage.getItem('currentFile') || '',
+        owner: currentFileOwner
+    };
 }
 
-function setCurrentFileName(name) {
+function setCurrentFileName(name, owner = 'local') {
     localStorage.setItem('currentFile', name);
+    currentFileOwner = owner;
 }
 
 function renderFileList() {
     const fileList = document.getElementById('file-list');
     fileList.innerHTML = '';
-    const files = getFiles();
-    const currentFile = getCurrentFileName();
+    const localFiles = getFiles('local');
+    const peerFiles = getFiles('peer');
+    const current = getCurrentFileName();
+
+    if (Object.keys(localFiles).length > 0) {
+        const localSection = createFileSection('Local Files');
+        Object.keys(localFiles).forEach(name => {
+            const li = createFileListItem(name, 'local', current);
+            localSection.querySelector('ul').appendChild(li);
+        });
+        fileList.appendChild(localSection);
+    }
+
+    if (Object.keys(peerFiles).length > 0) {
+        const peerSection = createFileSection('Peer Files');
+        Object.keys(peerFiles).forEach(name => {
+            const li = createFileListItem(name, 'peer', current);
+            peerSection.querySelector('ul').appendChild(li);
+        });
+        fileList.appendChild(peerSection);
+    }
+}
+
+function createFileSection(title) {
+    const section = document.createElement('div');
+    section.className = 'mb-4';
+    section.innerHTML = `
+        <h3 class="text-sm font-medium text-gray-400 px-2 mb-2">${title}</h3>
+        <ul class="space-y-1"></ul>
+    `;
+    return section;
+}
+
+function createFileListItem(name, owner, current) {
+    const li = document.createElement('li');
+    li.className = 'mx-2 mb-1 group transition-all duration-200';
+    li.setAttribute('data-filename', name);
+    li.setAttribute('data-owner', owner);
+
+    const isActive = name === current.name && owner === current.owner;
     
-    Object.keys(files).forEach(name => {
-        const li = document.createElement('li');
-        li.className = 'mx-2 mb-1 group transition-all duration-200';
-        li.setAttribute('data-filename', name);
-        
-        const fileContent = document.createElement('div');
-        fileContent.className = `flex items-center px-3 py-2 rounded-md text-sm cursor-pointer transition-all ${
-            name === currentFile 
-                ? 'bg-[var(--accent)]/10 text-[var(--accent)] shadow-lg shadow-[var(--accent)]/10' 
-                : 'text-gray-400 hover:bg-white/5'
-        }`;
-        
-        const icon = document.createElement('i');
-        const ext = name.split('.').pop().toLowerCase();
-        const iconClass = {
-            'js': 'fab fa-js',
-            'css': 'fab fa-css3',
-            'html': 'fab fa-html5',
-            'json': 'fas fa-code',
-            'txt': 'fas fa-file-alt',
-            'md': 'fas fa-file-alt'
-        }[ext] || 'fas fa-file-code';
-        
-        icon.className = `${iconClass} mr-3 ${name === currentFile ? 'text-[var(--accent)]' : 'text-gray-400'}`;
-        
-        const fileName = document.createElement('span');
-        fileName.textContent = name;
-        fileName.className = 'flex-1';
-        
+    const fileContent = document.createElement('div');
+    fileContent.className = `flex items-center px-3 py-2 rounded-md text-sm cursor-pointer transition-all ${
+        isActive 
+            ? 'bg-[var(--accent)]/10 text-[var(--accent)] shadow-lg shadow-[var(--accent)]/10' 
+            : 'text-gray-400 hover:bg-white/5'
+    }`;
+
+    const ownerBadge = document.createElement('span');
+    ownerBadge.className = `text-xs px-1.5 py-0.5 rounded ${
+        owner === 'local' ? 'bg-[var(--accent)]/10 text-[var(--accent)]' : 'bg-purple-500/10 text-purple-400'
+    } mr-2`;
+    ownerBadge.textContent = owner === 'local' ? 'Local' : 'Peer';
+
+    const icon = document.createElement('i');
+    const ext = name.split('.').pop().toLowerCase();
+    const iconClass = {
+        'js': 'fab fa-js',
+        'css': 'fab fa-css3',
+        'html': 'fab fa-html5',
+        'json': 'fas fa-code',
+        'txt': 'fas fa-file-alt',
+        'md': 'fas fa-file-alt'
+    }[ext] || 'fas fa-file-code';
+    
+    icon.className = `${iconClass} mr-3 ${isActive ? 'text-[var(--accent)]' : 'text-gray-400'}`;
+    
+    const fileName = document.createElement('span');
+    fileName.textContent = name;
+    fileName.className = 'flex-1';
+
+    fileContent.appendChild(ownerBadge);
+    fileContent.appendChild(icon);
+    fileContent.appendChild(fileName);
+
+    if (owner === 'local') {
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:text-red-400';
         deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
@@ -186,14 +245,12 @@ function renderFileList() {
             e.stopPropagation();
             deleteSelectedFile(name);
         };
-        
-        fileContent.appendChild(icon);
-        fileContent.appendChild(fileName);
         fileContent.appendChild(deleteBtn);
-        li.appendChild(fileContent);
-        li.onclick = () => switchFile(name);
-        fileList.appendChild(li);
-    });
+    }
+
+    li.appendChild(fileContent);
+    li.onclick = () => switchFile(name, owner);
+    return li;
 }
 
 function getFileMode(filename) {
@@ -210,15 +267,15 @@ function getFileMode(filename) {
     }[ext] || 'text';
 }
 
-function switchFile(name) {
+function switchFile(name, owner = 'local') {
     try {
-        const currentFile = getCurrentFileName();
-        if (currentFile) {
-            saveFile(currentFile, editor.getValue());
+        const current = getCurrentFileName();
+        if (current.name) {
+            saveFile(current.name, editor.getValue(), current.owner);
         }
         
-        setCurrentFileName(name);
-        const files = getFiles();
+        setCurrentFileName(name, owner);
+        const files = getFiles(owner);
         editor.setValue(files[name] || '');
         
         const mode = getFileMode(name);
@@ -243,6 +300,7 @@ function switchFile(name) {
             conn.send({
                 type: 'switchFile',
                 filename: name,
+                owner: owner,
                 content: files[name] || '',
                 color: localCursorColor,
                 mode: mode 
@@ -558,9 +616,9 @@ try {
     
     const currentFile = getCurrentFileName();
     if (currentFile) {
-        const files = getFiles();
-        editor.setValue(files[currentFile] || '');
-        const ext = currentFile.split('.').pop().toLowerCase();
+        const files = getFiles(currentFile.owner);
+        editor.setValue(files[currentFile.name] || '');
+        const ext = currentFile.name.split('.').pop().toLowerCase();
         const mode = {
             'js': 'javascript',
             'css': 'css',
@@ -678,7 +736,7 @@ function setupConnection() {
         updateConnectionStatus('connected', 'Connected to peer');
         conn.send({ 
             type: 'init',
-            files: getFiles(),
+            files: getFiles('local'),
             versions: versions,
             currentFile: getCurrentFileName()
         });
@@ -701,19 +759,19 @@ function setupConnection() {
     conn.on('data', (data) => {
         isReceiving = true;
         try {
+            let actualOwner = data.owner === 'local' ? 'peer' : 'local';
             if (data.type === 'operation') {
                 const targetFile = data.filename;
-                const files = getFiles();
+                const files = getFiles(actualOwner);
                 let content = files[targetFile] || '';
-
                 const operation = new TextOperation(data.operation, data.position, data.chars);
                 operation.version = data.version;
                 const pending = pendingOperations[targetFile] || [];
                 pending.forEach(op => operation.transform(op));
                 content = operation.apply(content);
-                saveFile(targetFile, content);
-
-                if (targetFile === getCurrentFileName()) {
+                saveFile(targetFile, content, actualOwner);
+                const current = getCurrentFileName();
+                if (targetFile === current.name && actualOwner === current.owner) {
                     editor.operation(() => {
                         const pos = editor.posFromIndex(operation.position);
                         if (operation.operation === 'insert') {
@@ -724,45 +782,41 @@ function setupConnection() {
                             editor.replaceRange('', from, to);
                         }
                     });
-                    
                     const cursorPosition = data.operation === 'insert' 
                         ? data.position + data.chars.length 
                         : data.position;
                     updatePeerCursor(cursorPosition, data.color || '#00ff9d');
                 }
-
                 versions[targetFile] = (versions[targetFile] || 0) + 1;
                 pendingOperations[targetFile] = pendingOperations[targetFile] || [];
                 pendingOperations[targetFile].push(operation);
             } else if (data.type === 'switchFile') {
                 const current = getCurrentFileName();
-                if (current) {
-                    saveFile(current, editor.getValue());
+                if (current.name) {
+                    saveFile(current.name, editor.getValue(), current.owner);
                 }
-                saveFile(data.filename, data.content);
-                setCurrentFileName(data.filename);
-                editor.setValue(data.content);
-                editor.setOption('mode', data.mode || getFileMode(data.filename));
+                saveFile(data.filename, data.content, actualOwner);
                 renderFileList();
+                clearPeerSelections();
             } else if (data.type === 'createFile') {
-                saveFile(data.filename, data.content);
-                if (data.filename === getCurrentFileName()) {
-                    editor.setOption('mode', data.mode || getFileMode(data.filename));
-                }
+                saveFile(data.filename, data.content, actualOwner);
                 renderFileList();
             } else if (data.type === 'deleteFile') {
-                const files = getFiles();
+                const files = getFiles(actualOwner);
                 delete files[data.filename];
-                localStorage.setItem('files', JSON.stringify(files));
+                if (actualOwner === 'local') {
+                    localStorage.setItem('files', JSON.stringify(files));
+                } else {
+                    peerFiles = files;
+                }
                 renderFileList();
             } else if (data.type === 'init') {
-                localStorage.setItem('files', JSON.stringify(data.files));
-                versions = data.versions || {};
-                switchFile(data.currentFile);
+                peerFiles = data.files;
+                peerVersions = data.versions;
                 renderFileList();
-            } else if (data.type === 'cursor' && getCurrentFileName() === data.filename) {
+            } else if (data.type === 'cursor' && getCurrentFileName().name === data.filename) {
                 updatePeerCursor(data.position, data.color || '#00ff9d');
-            } else if (data.type === 'selection' && getCurrentFileName() === data.filename) {
+            } else if (data.type === 'selection' && getCurrentFileName().name === data.filename) {
                 updatePeerSelection(data.start, data.end, data.color || '#00ff9d');
             } else if (data.type === 'chat') {
                 const message = {
@@ -796,6 +850,7 @@ function sendOperation(filename, operation) {
     conn.send({
         type: 'operation',
         filename: filename,
+        owner: currentFileOwner,
         operation: operation.operation,
         position: operation.position,
         chars: operation.chars,
@@ -818,19 +873,19 @@ editor.on('change', (cm, change) => {
             if (change.removed.some(line => line.length > 0)) {
                 const removedText = change.removed.join('\n');
                 const deleteOp = new TextOperation('delete', fromIndex, removedText);
-                sendOperation(currentFile, deleteOp);
+                sendOperation(currentFile.name, deleteOp);
             }
 
             const insertedText = change.text.join('\n');
             if (insertedText.length > 0 && !(change.origin === '+delete' && insertedText === '')) {
                 const insertOp = new TextOperation('insert', fromIndex, insertedText);
-                sendOperation(currentFile, insertOp);
+                sendOperation(currentFile.name, insertOp);
             }
 
             const cursorPos = editor.getCursor();
             conn.send({
                 type: 'cursor',
-                filename: currentFile,
+                filename: currentFile.name,
                 position: editor.indexFromPos(cursorPos),
                 color: localCursorColor
             });
@@ -844,14 +899,14 @@ editor.on('change', (cm, change) => {
     
     saveTimeout = setTimeout(() => {
         const currentFile = getCurrentFileName();
-        if (currentFile) {
-            saveFile(currentFile, editor.getValue());
+        if (currentFile.name) {
+            saveFile(currentFile.name, editor.getValue(), currentFile.owner);
         }
     }, 1000);
     
     const currentFile = getCurrentFileName();
-    if (currentFile) {
-        saveFile(currentFile, editor.getValue());
+    if (currentFile.name) {
+        saveFile(currentFile.name, editor.getValue(), currentFile.owner);
     }
 });
 
@@ -865,7 +920,7 @@ editor.on('beforeSelectionChange', (cm, change) => {
             if (from !== to) {
                 conn.send({
                     type: 'selection',
-                    filename: getCurrentFileName(),
+                    filename: getCurrentFileName().name,
                     start: from,
                     end: to,
                     color: localCursorColor
@@ -877,8 +932,8 @@ editor.on('beforeSelectionChange', (cm, change) => {
 
 window.addEventListener('unload', () => {
     const currentFile = getCurrentFileName();
-    if (currentFile) {
-        saveFile(currentFile, editor.getValue());
+    if (currentFile.name) {
+        saveFile(currentFile.name, editor.getValue(), currentFile.owner);
     }
     
     if (conn) conn.close();
@@ -887,16 +942,29 @@ window.addEventListener('unload', () => {
 
 function filterFiles(searchTerm) {
     const fileList = document.getElementById('file-list');
-    const files = getFiles();
+    const localFiles = getFiles('local');
+    const peerFiles = getFiles('peer');
     const terms = searchTerm.toLowerCase().split(' ');
     
-    Object.keys(files).forEach(name => {
-        const li = fileList.querySelector(`[data-filename="${name}"]`);
+    Object.keys(localFiles).forEach(name => {
+        const li = fileList.querySelector(`[data-filename="${name}"][data-owner="local"]`);
         if (!li) return;
         
         const matches = terms.every(term => 
             name.toLowerCase().includes(term) || 
-            files[name].toLowerCase().includes(term)
+            localFiles[name].toLowerCase().includes(term)
+        );
+        
+        li.style.display = matches ? 'block' : 'none';
+    });
+
+    Object.keys(peerFiles).forEach(name => {
+        const li = fileList.querySelector(`[data-filename="${name}"][data-owner="peer"]`);
+        if (!li) return;
+        
+        const matches = terms.every(term => 
+            name.toLowerCase().includes(term) || 
+            peerFiles[name].toLowerCase().includes(term)
         );
         
         li.style.display = matches ? 'block' : 'none';
@@ -1154,7 +1222,7 @@ function hideTypingIndicator() {
 function exportCurrentFile() {
     try {
         const currentFile = getCurrentFileName();
-        if (!currentFile) {
+        if (!currentFile.name) {
             alert('No file to export!');
             return;
         }
@@ -1164,7 +1232,7 @@ function exportCurrentFile() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = currentFile;
+        a.download = currentFile.name;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
