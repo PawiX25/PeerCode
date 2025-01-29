@@ -20,6 +20,7 @@ A real-time collaborative code editor that enables peer-to-peer coding sessions 
    - Line wrapping toggle
    - Cursor color customization
 -  File search functionality
+-  File exporting
 
 ## Technologies Used
 
