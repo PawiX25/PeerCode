@@ -13,6 +13,7 @@ let peerSelectionMarkers = new Map();
 let peerSelectionTimeout = null;
 let isHtmlPreview = false;
 let unreadMessages = 0;
+let isTypingTimeout = null;
 
 let settings = {
     theme: 'green',
@@ -380,6 +381,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme') || 'green';
     setTheme(savedTheme);
     
+    const previewBtn = document.getElementById('preview-toggle-btn');
+    const currentFile = getCurrentFileName();
+    if (currentFile && getFileMode(currentFile) === 'xml') {
+        previewBtn.classList.remove('hidden');
+    } else {
+        previewBtn.classList.add('hidden');
+    }
     
     const themeToggle = document.getElementById('theme-toggle');
     if (themeToggle) {
@@ -449,6 +457,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ['accent-color', 'gradient-start', 'gradient-end'].forEach(id => {
         document.getElementById(id)?.addEventListener('input', updateThemePreview);
+    });
+
+    const chatInput = document.getElementById('chat-input');
+    chatInput.addEventListener('input', () => {
+        if (conn?.open) {
+            if (isTypingTimeout) {
+                clearTimeout(isTypingTimeout);
+            }
+            
+            conn.send({
+                type: 'typing',
+                isTyping: true
+            });
+            
+            isTypingTimeout = setTimeout(() => {
+                conn.send({
+                    type: 'typing',
+                    isTyping: false
+                });
+            }, 5000);
+        }
     });
 });
 
@@ -743,6 +772,12 @@ function setupConnection() {
                     timestamp: data.timestamp
                 };
                 addMessageToChat(message);
+            } else if (data.type === 'typing') {
+                if (data.isTyping) {
+                    showTypingIndicator();
+                } else {
+                    hideTypingIndicator();
+                }
             }
         } catch (error) {
             updateConnectionStatus('error', 'Sync error: ' + error.message);
@@ -1025,6 +1060,8 @@ function toggleChat() {
         document.getElementById('chat-notification').classList.add('hidden');
         unreadMessages = 0;
         document.getElementById('chat-input').focus();
+    } else {
+        hideTypingIndicator();
     }
 }
 
@@ -1047,6 +1084,7 @@ function sendChatMessage() {
     };
     
     conn.send(chatMessage);
+    conn.send({ type: 'typing', isTyping: false });
     addMessageToChat(chatMessage);
     
     input.value = '';
@@ -1080,4 +1118,33 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function showTypingIndicator() {
+    const chatMessages = document.getElementById('chat-messages');
+    let indicator = chatMessages.querySelector('.typing-indicator');
+    
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.className = 'typing-indicator message';
+        indicator.innerHTML = `
+            <div class="inline-block max-w-[80%] bg-white/5 rounded-lg px-4 py-2">
+                <div class="flex space-x-1">
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+            </div>
+        `;
+        chatMessages.appendChild(indicator);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+function hideTypingIndicator() {
+    const chatMessages = document.getElementById('chat-messages');
+    const indicator = chatMessages.querySelector('.typing-indicator');
+    if (indicator) {
+        indicator.remove();
+    }
 }
