@@ -573,6 +573,27 @@
             </div>
         </div>
     </div>
+    <div id="delete-file-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="glass rounded-xl w-[400px] p-6 shadow-2xl shadow-black/20 scale-100 opacity-100 transition-all duration-200">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-white">Delete File</h3>
+                <button onclick="closeDeleteFileModal()" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-gray-300 mb-6">Are you sure you want to delete <span id="delete-filename" class="text-[var(--accent)]"></span>? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeDeleteFileModal()" 
+                        class="px-4 py-2 rounded-md text-sm text-gray-400 hover:text-white transition-colors">
+                    Cancel
+                </button>
+                <button onclick="confirmDeleteFile()" 
+                        class="px-4 py-2 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all text-sm">
+                    Delete File
+                </button>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

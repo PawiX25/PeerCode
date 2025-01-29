@@ -310,18 +310,32 @@ function handleNewFile(event) {
     }
 }
 
-function deleteSelectedFile(name) {
+let fileToDelete = null;
+
+function showDeleteFileModal(name) {
+    fileToDelete = name;
+    const modal = document.getElementById('delete-file-modal');
+    const filenameSpan = document.getElementById('delete-filename');
+    filenameSpan.textContent = name;
+    modal.classList.remove('hidden');
+}
+
+function closeDeleteFileModal() {
+    const modal = document.getElementById('delete-file-modal');
+    modal.classList.add('hidden');
+    fileToDelete = null;
+}
+
+function confirmDeleteFile() {
     try {
-        if (!confirm(`Delete ${name}?`)) return;
-        
         const files = getFiles();
-        delete files[name];
+        delete files[fileToDelete];
         localStorage.setItem('files', JSON.stringify(files));
         
         if (conn?.open) {
             conn.send({
                 type: 'deleteFile',
-                filename: name
+                filename: fileToDelete
             });
         }
         
@@ -336,10 +350,15 @@ function deleteSelectedFile(name) {
             editor.setOption('mode', 'text');
         }
         
+        closeDeleteFileModal();
         renderFileList();
     } catch (error) {
         alert('Failed to delete file: ' + error.message);
     }
+}
+
+function deleteSelectedFile(name) {
+    showDeleteFileModal(name);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
