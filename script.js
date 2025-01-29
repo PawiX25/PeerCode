@@ -12,6 +12,7 @@ let lastSaved = Date.now();
 let peerSelectionMarkers = new Map();
 let peerSelectionTimeout = null;
 let isHtmlPreview = false;
+let unreadMessages = 0;
 
 let settings = {
     theme: 'green',
@@ -728,6 +729,14 @@ function setupConnection() {
                 updatePeerCursor(data.position, data.color || '#00ff9d');
             } else if (data.type === 'selection' && getCurrentFileName() === data.filename) {
                 updatePeerSelection(data.start, data.end, data.color || '#00ff9d');
+            } else if (data.type === 'chat') {
+                const message = {
+                    type: 'chat',
+                    content: data.content,
+                    sender: 'Peer',
+                    timestamp: data.timestamp
+                };
+                addMessageToChat(message);
             }
         } catch (error) {
             updateConnectionStatus('error', 'Sync error: ' + error.message);
@@ -995,4 +1004,68 @@ function toggleHtmlPreview() {
         previewContainer.classList.add('hidden');
         editorWrapper.classList.remove('hidden');
     }
+}
+
+function toggleChat() {
+    const panel = document.getElementById('chat-panel');
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) {
+        document.getElementById('chat-notification').classList.add('hidden');
+        unreadMessages = 0;
+        document.getElementById('chat-input').focus();
+    }
+}
+
+function sendChatMessage() {
+    if (!conn?.open) {
+        alert('No peer connected');
+        return;
+    }
+
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    const chatMessage = {
+        type: 'chat',
+        content: message,
+        sender: 'You',
+        timestamp: Date.now()
+    };
+    
+    conn.send(chatMessage);
+    addMessageToChat(chatMessage);
+    
+    input.value = '';
+}
+
+function addMessageToChat(message) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageEl = document.createElement('div');
+    messageEl.className = `message ${message.sender === 'You' ? 'text-right' : ''}`;
+    
+    const time = new Date(message.timestamp).toLocaleTimeString();
+    
+    messageEl.innerHTML = `
+        <div class="inline-block max-w-[80%] ${message.sender === 'You' ? 'bg-[var(--accent)]/10' : 'bg-white/5'} rounded-lg px-4 py-2">
+            <div class="text-sm ${message.sender === 'You' ? 'text-[var(--accent)]' : 'text-gray-400'}">${message.sender}</div>
+            <div class="text-white break-words">${escapeHtml(message.content)}</div>
+            <div class="text-xs text-gray-500 mt-1">${time}</div>
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageEl);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    if (!document.getElementById('chat-panel').classList.contains('open')) {
+        unreadMessages++;
+        document.getElementById('chat-notification').classList.remove('hidden');
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
