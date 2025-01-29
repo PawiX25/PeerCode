@@ -60,8 +60,14 @@ function applySettings() {
 }
 
 function toggleSettings() {
-    const panel = document.getElementById('settings-panel');
-    panel.classList.toggle('open');
+    const settingsPanel = document.getElementById('settings-panel');
+    const chatPanel = document.getElementById('chat-panel');
+    
+    if (chatPanel.classList.contains('open')) {
+        chatPanel.classList.remove('open');
+    }
+    
+    settingsPanel.classList.toggle('open');
 }
 
 function setTheme(theme) {
@@ -1007,9 +1013,15 @@ function toggleHtmlPreview() {
 }
 
 function toggleChat() {
-    const panel = document.getElementById('chat-panel');
-    panel.classList.toggle('open');
-    if (panel.classList.contains('open')) {
+    const chatPanel = document.getElementById('chat-panel');
+    const settingsPanel = document.getElementById('settings-panel');
+    
+    if (settingsPanel.classList.contains('open')) {
+        settingsPanel.classList.remove('open');
+    }
+    
+    chatPanel.classList.toggle('open');
+    if (chatPanel.classList.contains('open')) {
         document.getElementById('chat-notification').classList.add('hidden');
         unreadMessages = 0;
         document.getElementById('chat-input').focus();
