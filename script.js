@@ -814,10 +814,16 @@ function setupConnection() {
                 peerFiles = data.files;
                 peerVersions = data.versions;
                 renderFileList();
-            } else if (data.type === 'cursor' && getCurrentFileName().name === data.filename) {
-                updatePeerCursor(data.position, data.color || '#00ff9d');
-            } else if (data.type === 'selection' && getCurrentFileName().name === data.filename) {
-                updatePeerSelection(data.start, data.end, data.color || '#00ff9d');
+            } else if (data.type === 'cursor') {
+                const currentFile = getCurrentFileName();
+                if (currentFile.name === data.filename && currentFile.owner === actualOwner) {
+                    updatePeerCursor(data.position, data.color || '#00ff9d');
+                }
+            } else if (data.type === 'selection') {
+                const currentFile = getCurrentFileName();
+                if (currentFile.name === data.filename && currentFile.owner === actualOwner) {
+                    updatePeerSelection(data.start, data.end, data.color || '#00ff9d');
+                }
             } else if (data.type === 'chat') {
                 const message = {
                     type: 'chat',
@@ -886,6 +892,7 @@ editor.on('change', (cm, change) => {
             conn.send({
                 type: 'cursor',
                 filename: currentFile.name,
+                owner: currentFileOwner,
                 position: editor.indexFromPos(cursorPos),
                 color: localCursorColor
             });
@@ -921,6 +928,7 @@ editor.on('beforeSelectionChange', (cm, change) => {
                 conn.send({
                     type: 'selection',
                     filename: getCurrentFileName().name,
+                    owner: currentFileOwner,
                     start: from,
                     end: to,
                     color: localCursorColor
