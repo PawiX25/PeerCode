@@ -297,8 +297,9 @@ function switchFile(name, owner = 'local') {
         const previewContainer = document.getElementById('preview-container');
         const editorWrapper = editor.getWrapperElement().parentNode;
         
-        if (mode === 'xml') {
+        if (mode === 'xml' || mode === 'markdown') {
             previewBtn.classList.remove('hidden');
+            previewBtn.innerHTML = `<i class="fas fa-eye mr-2"></i>${mode === 'markdown' ? 'Preview Markdown' : 'Preview HTML'}`;
         } else {
             previewBtn.classList.add('hidden');
         }
@@ -1244,10 +1245,40 @@ function toggleHtmlPreview() {
     const previewContainer = document.getElementById('preview-container');
     const previewFrame = document.getElementById('preview-frame');
     const editorWrapper = editor.getWrapperElement().parentNode;
+    const currentFile = getCurrentFileName();
+    const mode = getFileMode(currentFile.name);
+    
     if (previewContainer.classList.contains('hidden')) {
         previewContainer.classList.remove('hidden');
         editorWrapper.classList.add('hidden');
-        previewFrame.srcdoc = `<style>body { background-color: #FFFDE7; }</style>` + editor.getValue();
+        
+        if (mode === 'markdown') {
+            const content = editor.getValue();
+            previewFrame.classList.add('markdown-preview');
+            previewFrame.srcdoc = `
+                <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+                <style>
+                    body { 
+                        background-color: rgba(20, 20, 20, 0.7);
+                        margin: 0;
+                        padding: 20px;
+                    }
+                    .markdown-preview {
+                        color: #fff;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        line-height: 1.6;
+                        max-width: 900px;
+                        margin: 0 auto;
+                    }
+                </style>
+                <div class="markdown-preview">
+                    ${marked.parse(content)}
+                </div>
+            `;
+        } else {
+            previewFrame.classList.remove('markdown-preview');
+            previewFrame.srcdoc = `<style>body { background-color: #FFFDE7; }</style>` + editor.getValue();
+        }
     } else {
         previewContainer.classList.add('hidden');
         editorWrapper.classList.remove('hidden');

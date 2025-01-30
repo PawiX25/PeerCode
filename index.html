@@ -22,6 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/ruby/ruby.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/php/php.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/markdown/markdown.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             --accent: #00ff9d;
@@ -408,6 +409,63 @@
         @keyframes peer-pulse {
             0%, 100% { transform: scale(1); opacity: 0.8; }
             50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .markdown-preview {
+            padding: 2rem;
+            color: #fff;
+            line-height: 1.6;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        .markdown-preview h1 { font-size: 2em; margin-bottom: 1em; color: var(--accent); }
+        .markdown-preview h2 { font-size: 1.5em; margin-bottom: 0.8em; color: var(--accent); }
+        .markdown-preview h3 { font-size: 1.3em; margin-bottom: 0.6em; color: var(--accent); }
+        .markdown-preview p { margin-bottom: 1em; }
+        .markdown-preview code {
+            background: rgba(255,255,255,0.1);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .markdown-preview pre code {
+            display: block;
+            padding: 1em;
+            overflow-x: auto;
+            background: rgba(0,0,0,0.3);
+        }
+        .markdown-preview blockquote {
+            border-left: 4px solid var(--accent);
+            padding-left: 1em;
+            margin: 1em 0;
+            color: #a0aec0;
+        }
+        .markdown-preview ul, .markdown-preview ol {
+            padding-left: 2em;
+            margin-bottom: 1em;
+        }
+        .markdown-preview a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .markdown-preview a:hover {
+            text-decoration: underline;
+        }
+        .markdown-preview img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        .markdown-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+        }
+        .markdown-preview th, .markdown-preview td {
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.5em;
+        }
+        .markdown-preview th {
+            background: rgba(255,255,255,0.05);
         }
     </style>
 </head>
