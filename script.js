@@ -276,7 +276,7 @@ function switchFile(name, owner = 'local') {
         
         setCurrentFileName(name, owner);
         const files = getFiles(owner);
-        editor.setValue(files[name] || '');
+        editor.setValue(files[name] || '', 'localSwitchFile');
         
         const mode = getFileMode(name);
         editor.setOption('mode', mode);
@@ -798,6 +798,9 @@ function setupConnection() {
                     saveFile(current.name, editor.getValue(), current.owner);
                 }
                 saveFile(data.filename, data.content, actualOwner);
+                if (data.filename === current.name && actualOwner === current.owner) {
+                    editor.setValue(data.content, 'peerSwitchFile');
+                }
                 renderFileList();
                 clearPeerSelections();
             } else if (data.type === 'createFile') {
@@ -872,35 +875,41 @@ function sendOperation(filename, operation) {
 }
 
 editor.on('change', (cm, change) => {
-    if (!isReceiving && conn?.open) {
-        try {
-            const currentFile = getCurrentFileName();
-            const fromIndex = editor.indexFromPos(change.from);
-            const toIndex = editor.indexFromPos(change.to);
+    if (change.origin === 'setValue' || change.origin === 'localSwitchFile') {
+        return;
+    }
+    
+    if (isReceiving) {
+        return;
+    }
 
-            if (change.removed.some(line => line.length > 0)) {
-                const removedText = change.removed.join('\n');
-                const deleteOp = new TextOperation('delete', fromIndex, removedText);
-                sendOperation(currentFile.name, deleteOp);
-            }
+    try {
+        const currentFile = getCurrentFileName();
+        const fromIndex = editor.indexFromPos(change.from);
+        const toIndex = editor.indexFromPos(change.to);
 
-            const insertedText = change.text.join('\n');
-            if (insertedText.length > 0 && !(change.origin === '+delete' && insertedText === '')) {
-                const insertOp = new TextOperation('insert', fromIndex, insertedText);
-                sendOperation(currentFile.name, insertOp);
-            }
-
-            const cursorPos = editor.getCursor();
-            conn.send({
-                type: 'cursor',
-                filename: currentFile.name,
-                owner: currentFileOwner,
-                position: editor.indexFromPos(cursorPos),
-                color: localCursorColor
-            });
-        } catch (error) {
-            updateConnectionStatus('error', 'Failed to send changes: ' + error.message);
+        if (change.removed.some(line => line.length > 0)) {
+            const removedText = change.removed.join('\n');
+            const deleteOp = new TextOperation('delete', fromIndex, removedText);
+            sendOperation(currentFile.name, deleteOp);
         }
+
+        const insertedText = change.text.join('\n');
+        if (insertedText.length > 0 && !(change.origin === '+delete' && insertedText === '')) {
+            const insertOp = new TextOperation('insert', fromIndex, insertedText);
+            sendOperation(currentFile.name, insertOp);
+        }
+
+        const cursorPos = editor.getCursor();
+        conn.send({
+            type: 'cursor',
+            filename: currentFile.name,
+            owner: currentFileOwner,
+            position: editor.indexFromPos(cursorPos),
+            color: localCursorColor
+        });
+    } catch (error) {
+        updateConnectionStatus('error', 'Failed to send changes: ' + error.message);
     }
     
     if (saveTimeout) clearTimeout(saveTimeout);
