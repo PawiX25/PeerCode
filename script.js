@@ -633,7 +633,23 @@ try {
     updateConnectionStatus('error', 'Failed to initialize editor: ' + error.message);
 }
 
-peer = new Peer({ debug: 2 });
+peer = new Peer({ 
+    debug: 2,
+    config: {
+        'iceServers': [
+            { 
+                url: 'stun:138.68.182.24:3478',
+                urls: 'stun:138.68.182.24:3478'
+            },
+            {
+                url: 'turn:138.68.182.24:3478',
+                urls: 'turn:138.68.182.24:3478',
+                username: 'debianturn',
+                credential: 'jaZxir-6fawje-remrot'
+            }
+        ]
+    }
+});
 
 peer.on('open', (id) => {
     document.getElementById('peer-id').value = id;
