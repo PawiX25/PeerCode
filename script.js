@@ -21,12 +21,14 @@ let settings = {
     fontFamily: "'JetBrains Mono'",
     tabSize: 2,
     autoSave: 5,
-    cursorColor: '#00ff9d'
+    cursorColor: '#00ff9d',
+    showPeerActivity: true
 };
 
 let peerFiles = {};
 let peerVersions = {};
 let currentFileOwner = 'local';
+let peerActiveFiles = new Set();
 
 function loadSettings() {
     const savedSettings = localStorage.getItem('settings');
@@ -209,6 +211,16 @@ function createFileListItem(name, owner, current) {
             ? 'bg-[var(--accent)]/10 text-[var(--accent)] shadow-lg shadow-[var(--accent)]/10' 
             : 'text-gray-400 hover:bg-white/5'
     }`;
+
+    const key = `${owner === 'local' ? 'peer' : 'local'}:${name}`;
+    const isPeerActive = peerActiveFiles.has(key);
+    
+    if (isPeerActive && settings.showPeerActivity) {
+        const indicator = document.createElement('div');
+        indicator.className = 'peer-active-indicator';
+        indicator.style.backgroundColor = owner === 'local' ? '#bd00ff' : '#00ff9d';
+        fileContent.appendChild(indicator);
+    }
 
     const ownerBadge = document.createElement('span');
     ownerBadge.className = `text-xs px-1.5 py-0.5 rounded ${
@@ -548,6 +560,14 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebar.addEventListener('dragover', handleDragOver);
     sidebar.addEventListener('dragleave', handleDragLeave);
     sidebar.addEventListener('drop', handleFileDrop);
+    
+    const showPeerActivity = document.getElementById('show-peer-activity');
+    showPeerActivity.checked = settings.showPeerActivity;
+    showPeerActivity.addEventListener('change', (e) => {
+        settings.showPeerActivity = e.target.checked;
+        saveSettings();
+        renderFileList();
+    });
 });
 
 function preventDefaults(e) {
@@ -843,6 +863,7 @@ function setupConnection() {
         }
         if (peerCursorTimeout) clearTimeout(peerCursorTimeout);
         clearPeerSelections();
+        clearPeerFileActivity();
     });
 
     conn.on('error', (error) => {
@@ -884,6 +905,7 @@ function setupConnection() {
                 pendingOperations[targetFile] = pendingOperations[targetFile] || [];
                 pendingOperations[targetFile].push(operation);
             } else if (data.type === 'switchFile') {
+                updatePeerFileActivity(data.filename, data.owner);
                 const current = getCurrentFileName();
                 if (current.name) {
                     saveFile(current.name, editor.getValue(), current.owner);
@@ -1357,4 +1379,16 @@ function exportCurrentFile() {
     } catch (error) {
         alert('Failed to export file: ' + error.message);
     }
+}
+
+function updatePeerFileActivity(filename, owner) {
+    const key = `${owner}:${filename}`;
+    peerActiveFiles.clear();
+    peerActiveFiles.add(key);
+    if (settings.showPeerActivity) renderFileList();
+}
+
+function clearPeerFileActivity() {
+    peerActiveFiles.clear();
+    if (settings.showPeerActivity) renderFileList();
 }

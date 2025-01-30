@@ -396,6 +396,19 @@
         .drag-over::after {
             opacity: 1;
         }
+
+        .peer-active-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: auto;
+            animation: peer-pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes peer-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
     </style>
 </head>
 <body class="text-gray-300 h-screen flex overflow-hidden">
@@ -626,6 +639,17 @@
                         <label class="text-sm text-gray-300 mb-2 block">Interval (seconds)</label>
                         <input type="range" min="1" max="30" value="5" class="slider" id="auto-save">
                         <div class="text-right text-sm text-gray-400 mt-1">5s</div>
+                    </div>
+                </div>
+
+                <div class="setting-group pb-6">
+                    <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Collaboration</h3>
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm text-gray-300">Show peer's active file</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-peer-activity" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
                 </div>
             </div>
