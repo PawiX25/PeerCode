@@ -374,10 +374,10 @@
 
         .drag-over {
             background: rgba(var(--accent-rgb), 0.1) !important;
-            border: 2px dashed var(--accent) !important;
+            outline: 2px dashed var(--accent) !important;
+            outline-offset: -2px;
             position: relative;
-            transform: scale(0.99);
-            transition: all 0.3s ease;
+            transition: all 0.3s ease, outline-offset 0.3s ease;
             overflow: hidden;
         }
 
@@ -410,7 +410,19 @@
             border-radius: 0.5rem;
             border: 1px solid var(--accent);
             z-index: 11;
-            animation: fadeIn 0.3s ease;
+            animation: dropTextFadeIn 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        @keyframes dropTextFadeIn {
+            from { 
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to { 
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
         }
 
         @keyframes pulse {
@@ -536,6 +548,12 @@
         #sidebar {
             position: relative;
             overflow: hidden;
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        #file-list li {
+            transition: all 0.3s ease;
         }
     </style>
 </head>
