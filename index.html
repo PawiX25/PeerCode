@@ -29,11 +29,13 @@
             --accent-gradient: linear-gradient(to right, #00ff9d, #00a6ff);
             --bg-dark: #0a0a0a;
             --bg-glass: rgba(255, 255, 255, 0.03);
+            --accent-rgb: 0, 255, 157;
         }
         
         [data-theme="purple"] {
             --accent: #bd00ff;
             --accent-gradient: linear-gradient(to right, #bd00ff, #4c00ff);
+            --accent-rgb: 189, 0, 255;
         }
         body {
             background: radial-gradient(circle at 50% -50%, #1a1a1a, var(--bg-dark));
@@ -371,31 +373,66 @@
         }
 
         .drag-over {
-            background: rgba(255, 255, 255, 0.1) !important;
-            box-shadow: inset 0 0 20px var(--accent);
-        }
-
-        .drop-zone {
+            background: rgba(var(--accent-rgb), 0.1) !important;
+            border: 2px dashed var(--accent) !important;
             position: relative;
-            transition: all 0.2s ease;
+            transform: scale(0.99);
+            transition: all 0.3s ease;
+            overflow: hidden;
         }
 
-        .drop-zone::after {
-            content: 'Drop files here to upload';
+        .drag-over::before {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 10;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease;
+        }
+
+        .drag-over::after {
+            content: 'Drop files here';
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            font-size: 1.25rem;
+            font-size: 1.5rem;
+            font-weight: 600;
             color: var(--accent);
             text-shadow: 0 0 10px var(--accent);
-            pointer-events: none;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--accent);
+            z-index: 11;
+            animation: fadeIn 0.3s ease;
         }
 
-        .drag-over::after {
-            opacity: 1;
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 0.1;
+            }
+            50% { 
+                transform: scale(1.05);
+                opacity: 0.2;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to { 
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
         }
 
         .peer-active-indicator {
@@ -466,6 +503,39 @@
         }
         .markdown-preview th {
             background: rgba(255,255,255,0.05);
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            background: var(--accent);
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            opacity: 0;
+            mix-blend-mode: screen;
+            z-index: 50;
+        }
+
+        .ripple-animation {
+            animation: ripple 0.6s ease-out forwards;
+        }
+
+        #sidebar {
+            position: relative;
+            overflow: hidden;
         }
     </style>
 </head>

@@ -577,30 +577,153 @@ function preventDefaults(e) {
 }
 
 function handleDragOver(e) {
-    sidebar.classList.add('drag-over');
+    e.preventDefault();
+    const sidebar = document.getElementById('sidebar');
+    
+    if (!sidebar.classList.contains('drag-over')) {
+        sidebar.classList.add('drag-over');
+        const fileItems = document.querySelectorAll('#file-list li');
+        fileItems.forEach(item => {
+            item.style.opacity = '0.5';
+            item.style.transform = 'scale(0.98)';
+            item.style.transition = 'all 0.3s ease';
+        });
+    }
+
+    const rect = sidebar.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    sidebar.style.setProperty('--mouse-x', `${x}px`);
+    sidebar.style.setProperty('--mouse-y', `${y}px`);
+
+    const before = sidebar.querySelector(':before');
+    if (before) {
+        before.style.left = `${x}px`;
+        before.style.top = `${y}px`;
+    }
 }
 
 function handleDragLeave(e) {
-    sidebar.classList.remove('drag-over');
+    e.preventDefault();
+    if (!e.relatedTarget || !sidebar.contains(e.relatedTarget)) {
+        sidebar.classList.remove('drag-over');
+
+        const fileItems = document.querySelectorAll('#file-list li');
+        fileItems.forEach(item => {
+            item.style.opacity = '1';
+            item.style.transform = 'scale(1)';
+        });
+    }
 }
 
-async function handleFileDrop(e) {
+function handleFileDrop(e) {
+    e.preventDefault();
+    const sidebar = document.getElementById('sidebar');
     sidebar.classList.remove('drag-over');
+
+    const fileItems = document.querySelectorAll('#file-list li');
+    fileItems.forEach(item => {
+        item.style.opacity = '1';
+        item.style.transform = 'scale(1)';
+    });
+
     const dt = e.dataTransfer;
     const files = dt.files;
 
-    for (const file of files) {
-        if (file.type.startsWith('text/') || file.name.match(/\.(js|css|html|txt|py|rb|php|md)$/i)) {
-            try {
-                const content = await readFile(file);
-                createFileFromDrop(file.name, content);
-            } catch (error) {
-                alert(`Error reading ${file.name}: ${error.message}`);
-            }
-        } else {
-            alert(`${file.name} is not a supported text file type`);
+    if (files.length === 0) return;
+
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    const rect = sidebar.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    sidebar.appendChild(ripple);
+
+    requestAnimationFrame(() => {
+        ripple.classList.add('ripple-animation');
+    });
+
+    ripple.addEventListener('animationend', () => {
+        ripple.remove();
+    });
+
+    const flash = document.createElement('div');
+    flash.style.cssText = `
+        position: absolute;
+        inset: 0;
+        background: var(--accent);
+        opacity: 0;
+        z-index: 40;
+        pointer-events: none;
+    `;
+    sidebar.appendChild(flash);
+    
+    flash.animate([
+        { opacity: 0.1 },
+        { opacity: 0 }
+    ], {
+        duration: 300,
+        easing: 'ease-out'
+    }).onfinish = () => flash.remove();
+
+    handleFiles(Array.from(files));
+}
+
+async function handleFiles(files) {
+    const supportedExtensions = /\.(js|css|html|txt|py|rb|php|md|json)$/i;
+    const validFiles = files.filter(file => 
+        file.type.startsWith('text/') || supportedExtensions.test(file.name)
+    );
+
+    if (validFiles.length === 0) {
+        showNotification('No valid text files found', 'error');
+        return;
+    }
+
+    for (const file of validFiles) {
+        try {
+            const content = await readFile(file);
+            createFileFromDrop(file.name, content);
+        } catch (error) {
+            showNotification(`Error reading ${file.name}: ${error.message}`, 'error');
         }
     }
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg glass z-50 transform transition-all duration-300 flex items-center space-x-3`;
+    
+    const icon = document.createElement('i');
+    icon.className = `fas fa-${type === 'error' ? 'exclamation-circle text-red-400' : 'check-circle text-[var(--accent)]'}`;
+    
+    const text = document.createElement('span');
+    text.textContent = message;
+    text.className = 'text-sm';
+    
+    notification.appendChild(icon);
+    notification.appendChild(text);
+    document.body.appendChild(notification);
+
+    notification.animate([
+        { transform: 'translateY(100%)', opacity: 0 },
+        { transform: 'translateY(0)', opacity: 1 }
+    ], {
+        duration: 300,
+        easing: 'ease-out'
+    });
+    
+    setTimeout(() => {
+        notification.animate([
+            { transform: 'translateY(0)', opacity: 1 },
+            { transform: 'translateY(100%)', opacity: 0 }
+        ], {
+            duration: 300,
+            easing: 'ease-in'
+        }).onfinish = () => notification.remove();
+    }, 3000);
 }
 
 function readFile(file) {
