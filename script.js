@@ -852,6 +852,11 @@ function setupConnection() {
 }
 
 function sendOperation(filename, operation) {
+    if (!conn || !conn.open) {
+        console.warn('Cannot send operation: No active connection');
+        return;
+    }
+
     versions[filename] = (versions[filename] || 0) + 1;
     operation.version = versions[filename];
     
@@ -900,14 +905,16 @@ editor.on('change', (cm, change) => {
             sendOperation(currentFile.name, insertOp);
         }
 
-        const cursorPos = editor.getCursor();
-        conn.send({
-            type: 'cursor',
-            filename: currentFile.name,
-            owner: currentFileOwner,
-            position: editor.indexFromPos(cursorPos),
-            color: localCursorColor
-        });
+        if (conn && conn.open) {
+            const cursorPos = editor.getCursor();
+            conn.send({
+                type: 'cursor',
+                filename: currentFile.name,
+                owner: currentFileOwner,
+                position: editor.indexFromPos(cursorPos),
+                color: localCursorColor
+            });
+        }
     } catch (error) {
         updateConnectionStatus('error', 'Failed to send changes: ' + error.message);
     }
