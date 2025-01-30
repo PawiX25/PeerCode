@@ -539,7 +539,82 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 5000);
         }
     });
+
+    const sidebar = document.getElementById('sidebar');
+    ['dragover', 'dragleave', 'drop'].forEach(event => {
+        sidebar.addEventListener(event, preventDefaults);
+    });
+
+    sidebar.addEventListener('dragover', handleDragOver);
+    sidebar.addEventListener('dragleave', handleDragLeave);
+    sidebar.addEventListener('drop', handleFileDrop);
 });
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function handleDragOver(e) {
+    sidebar.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    sidebar.classList.remove('drag-over');
+}
+
+async function handleFileDrop(e) {
+    sidebar.classList.remove('drag-over');
+    const dt = e.dataTransfer;
+    const files = dt.files;
+
+    for (const file of files) {
+        if (file.type.startsWith('text/') || file.name.match(/\.(js|css|html|txt|py|rb|php|md)$/i)) {
+            try {
+                const content = await readFile(file);
+                createFileFromDrop(file.name, content);
+            } catch (error) {
+                alert(`Error reading ${file.name}: ${error.message}`);
+            }
+        } else {
+            alert(`${file.name} is not a supported text file type`);
+        }
+    }
+}
+
+function readFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(file);
+    });
+}
+
+function createFileFromDrop(name, content) {
+    try {
+        const files = getFiles();
+        let finalName = name;
+        let counter = 1;
+
+        while (files[finalName]) {
+            const parts = name.split('.');
+            const ext = parts.length > 1 ? `.${parts.pop()}` : '';
+            finalName = `${parts.join('.')} (${counter++})${ext}`;
+        }
+
+        saveFile(finalName, content);
+        if (!getCurrentFileName().name) {
+            setCurrentFileName(finalName);
+            editor.setValue(content);
+            const mode = getFileMode(finalName);
+            editor.setOption('mode', mode);
+        }
+        renderFileList();
+    } catch (error) {
+        alert('Error creating file: ' + error.message);
+    }
+}
 
 class TextOperation {
     constructor(operation, position, chars) {

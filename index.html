@@ -368,10 +368,38 @@
         .chat-icon-pulse {
             animation: iconPulse 1s ease-in-out infinite;
         }
+
+        .drag-over {
+            background: rgba(255, 255, 255, 0.1) !important;
+            box-shadow: inset 0 0 20px var(--accent);
+        }
+
+        .drop-zone {
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone::after {
+            content: 'Drop files here to upload';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            font-size: 1.25rem;
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--accent);
+            pointer-events: none;
+        }
+
+        .drag-over::after {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="text-gray-300 h-screen flex overflow-hidden">
-    <div class="w-72 glass border-r border-gray-800 flex flex-col slide-in">
+    <div class="w-72 glass border-r border-gray-800 flex flex-col slide-in drop-zone" id="sidebar">
         <div class="p-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[#00a6ff] flex items-center justify-center">
