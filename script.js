@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const previewBtn = document.getElementById('preview-toggle-btn');
     const currentFile = getCurrentFileName();
-    if (currentFile && getFileMode(currentFile) === 'xml') {
+    if (currentFile.name && getFileMode(currentFile.name) === 'xml') {
         previewBtn.classList.remove('hidden');
     } else {
         previewBtn.classList.add('hidden');
