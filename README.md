@@ -11,14 +11,38 @@ A real-time collaborative code editor that enables peer-to-peer coding sessions 
 -  Automatic local saving
 -  Beautiful dark theme interface
 -  Zero server dependency
--  Custom color themes with gradient support
--  HTML file live preview
--  Multiple font families (JetBrains Mono, Fira Code, Source Code Pro, etc.)
+-  Built-in Chat System:
+   - Real-time messaging
+   - Typing indicators
+   - Unread message notifications
+   - Message timestamps
+-  Custom color themes with gradient support:
+   - Create unlimited custom themes
+   - Customize accent color and gradients
+   - Save and manage themes locally
+-  HTML & Markdown Preview:
+   - Live HTML preview
+   - Markdown rendering with syntax highlighting
+   - Responsive preview window
+-  File Management:
+   - Drag & drop file upload
+   - File search with content filtering
+   - File export functionality
+   - Visual peer activity indicators
+-  Multiple font families:
+   - JetBrains Mono
+   - Fira Code
+   - Source Code Pro
+   - Roboto Mono
+   - IBM Plex Mono
+   - Space Mono
+   - Ubuntu Mono
 -  Customizable editor settings:
    - Font size (10-24px)
    - Tab size (2, 4, or 8 spaces)
    - Line wrapping toggle
    - Cursor color customization
+   - Auto-save interval (1-30 seconds)
 -  File search functionality
 -  File exporting
 
