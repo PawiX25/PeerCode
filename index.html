@@ -555,6 +555,53 @@
         #file-list li {
             transition: all 0.3s ease;
         }
+
+        .editor-container {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .editor-wrapper {
+            position: absolute;
+            inset: 0;
+            overflow: visible;
+        }
+        
+        .CodeMirror {
+            position: absolute !important;
+            inset: 0 !important;
+            height: 100% !important;
+        }
+        
+        .CodeMirror-scroll {
+            overflow: scroll !important;
+        }
+        
+        .CodeMirror-hscrollbar,
+        .CodeMirror-vscrollbar {
+            position: fixed;
+            z-index: 100;
+        }
+        
+        .header-controls {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        .header-controls::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .header-content {
+            min-width: max-content;
+            padding: 0 1.5rem;
+        }
     </style>
 </head>
 <body class="text-gray-300 h-screen flex overflow-hidden">
@@ -597,33 +644,37 @@
         </div>
     </div>
     <div class="flex-1 flex flex-col">
-        <div class="h-16 glass flex items-center px-6 justify-between">
-            <div class="flex items-center space-x-4">
-                <div id="connection-status" class="text-sm rounded-md px-3 py-1.5 glass"></div>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="glass px-4 py-1.5 rounded-md flex items-center space-x-3">
-                    <span class="text-xs text-gray-400">YOUR ID</span>
-                    <input type="text" id="peer-id" class="bg-transparent w-32 text-sm" readonly>
+        <div class="h-16 glass header-controls">
+            <div class="h-full flex items-center justify-between header-content">
+                <div class="flex items-center space-x-4">
+                    <div id="connection-status" class="text-sm rounded-md px-3 py-1.5 glass"></div>
                 </div>
-                <div class="glass px-4 py-1.5 rounded-md flex items-center space-x-3">
-                    <span class="text-xs text-gray-400">CONNECT TO</span>
-                    <input type="text" id="connect-to" class="bg-transparent w-32 text-sm" placeholder="Peer ID">
+                <div class="flex items-center space-x-4">
+                    <div class="glass px-4 py-1.5 rounded-md flex items-center space-x-3">
+                        <span class="text-xs text-gray-400">YOUR ID</span>
+                        <input type="text" id="peer-id" class="bg-transparent w-32 text-sm" readonly>
+                    </div>
+                    <div class="glass px-4 py-1.5 rounded-md flex items-center space-x-3">
+                        <span class="text-xs text-gray-400">CONNECT TO</span>
+                        <input type="text" id="connect-to" class="bg-transparent w-32 text-sm" placeholder="Peer ID">
+                    </div>
+                    <button onclick="connectToPeer()" class="px-4 py-1.5 rounded-md bg-gradient-to-r from-[var(--accent)] to-[#4c00ff] text-black font-medium text-sm hover:shadow-lg hover:shadow-[var(--accent)]/20 transition-all">
+                        <i class="fas fa-link mr-2"></i>Connect
+                    </button>
+                    <button onclick="exportCurrentFile()" class="px-4 py-1.5 rounded-md text-sm bg-gradient-to-r from-[var(--accent)] to-[#4c00ff] text-black hover:shadow-lg hover:shadow-[var(--accent)]/20 transition-all">
+                        <i class="fas fa-download mr-2"></i>Export File
+                    </button>
+                    <button id="preview-toggle-btn" onclick="toggleHtmlPreview()" class="px-4 py-1.5 rounded-md text-sm bg-gradient-to-r from-[var(--accent)] to-[#4c00ff] text-black hover:shadow-lg hover:shadow-[var(--accent)]/20 transition-all">
+                        Toggle Preview
+                    </button>
                 </div>
-                <button onclick="connectToPeer()" class="px-4 py-1.5 rounded-md bg-gradient-to-r from-[var(--accent)] to-[#4c00ff] text-black font-medium text-sm hover:shadow-lg hover:shadow-[var(--accent)]/20 transition-all">
-                    <i class="fas fa-link mr-2"></i>Connect
-                </button>
-                <button onclick="exportCurrentFile()" class="px-4 py-1.5 rounded-md text-sm bg-gradient-to-r from-[var(--accent)] to-[#4c00ff] text-black hover:shadow-lg hover:shadow-[var(--accent)]/20 transition-all">
-                    <i class="fas fa-download mr-2"></i>Export File
-                </button>
-                <button id="preview-toggle-btn" onclick="toggleHtmlPreview()" class="px-4 py-1.5 rounded-md text-sm bg-gradient-to-r from-[var(--accent)] to-[#4c00ff] text-black hover:shadow-lg hover:shadow-[var(--accent)]/20 transition-all">
-                    Toggle Preview
-                </button>
             </div>
         </div>
         <div class="flex-1 overflow-hidden p-4">
-            <div class="h-full glass rounded-lg overflow-hidden">
-                <textarea id="editor"></textarea>
+            <div class="h-full glass rounded-lg overflow-hidden editor-container">
+                <div class="editor-wrapper">
+                    <textarea id="editor"></textarea>
+                </div>
             </div>
             <div id="preview-container" class="hidden h-full glass rounded-lg overflow-hidden">
                 <iframe id="preview-frame" class="w-full h-full"></iframe>
